@@ -2059,15 +2059,17 @@ def pumpDownload(mt):
     # print (binascii.hexlify( mt.doRemoteSuspend().responsePayload ))
 
 
-# Commented code to try remote bolusing...
-#    print (binascii.hexlify( mt.do405Message( pumpDatetime.encodedDatetime ).responsePayload ))
-#    print (binascii.hexlify( mt.do124Message( pumpDatetime.encodedDatetime ).responsePayload ))
-#    print (binascii.hexlify( mt.getBasicParameters().responsePayload ))
-#    print (binascii.hexlify( mt.getTempBasalStatus().responsePayload ))
-#    print (binascii.hexlify( mt.getBolusesStatus().responsePayload ))
-#    print (binascii.hexlify( mt.doRemoteBolus( 1, 0.1, 0 ).responsePayload ))
-#    print (binascii.hexlify( mt.doRemoteBolus( 1, 0.1, 1 ).responsePayload ))
+def pumpDownloadEssential(mt):
+    status = mt.getPumpStatus()
+    print ("Active Insulin: {0:.3f}U".format(status.activeInsulin))
+    print ("Sensor BGL: {0} mg/dL at {1}".format(status.sensorBGL, status.sensorBGLTimestamp.strftime("%c")))
+    print ("BGL trend: {0}".format(status.trendArrow))
+    print ("Current basal rate: {0:.3f}U".format(status.currentBasalRate))
+    print ("Temp basal rate: {0:.3f}U".format(status.tempBasalRate))
+    print ("Temp basal percentage: {0}%".format(status.tempBasalPercentage))
+    print ("Units remaining: {0:.3f}U".format(status.insulinUnitsRemaining))
+    print ("Battery remaining: {0}%".format(status.batteryLevelPercentage))
 
 
 if __name__ == '__main__':
-    downloadPumpSession(pumpDownload)
+    downloadPumpSession(pumpDownloadEssential)
