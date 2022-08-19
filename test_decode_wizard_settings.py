@@ -1,8 +1,9 @@
 import unittest
-from .read_minimed_next24 \
-    import PumpBolusWizardCarbRatiosResponseMessage, PumpBolusWizardSensitivityFactorsResponseMessage, PumpBolusWizardBGTargetsResponseMessage
+from read_minimed_next24 import PumpBolusWizardCarbRatiosResponseMessage, \
+    PumpBolusWizardSensitivityFactorsResponseMessage, PumpBolusWizardBGTargetsResponseMessage
 
-from datetime import datetime, time
+from datetime import time
+
 
 class TestBolusWizardSettingsDecode(unittest.TestCase):
 
@@ -231,6 +232,7 @@ class TestBolusWizardSettingsDecode(unittest.TestCase):
                 },
             ]
         })
+
 
 if __name__ == '__main__':
     unittest.main()
