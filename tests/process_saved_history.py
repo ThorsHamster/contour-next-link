@@ -6,6 +6,7 @@ from datetime import tzinfo, timedelta, datetime
 ZERO = timedelta(0)
 HOUR = timedelta(hours=1)
 
+
 # A UTC class.
 
 class UTC(tzinfo):
@@ -19,6 +20,7 @@ class UTC(tzinfo):
 
     def dst(self, dt):
         return ZERO
+
 
 utc = UTC()
 
