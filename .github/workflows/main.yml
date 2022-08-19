@@ -48,6 +48,6 @@ jobs:
         pip install wheel
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
 
-    - name: Test with pytest
+    - name: Run unittests
       run: |
-        pytest --cov=. ./
+        python -m unittest discover -t .
