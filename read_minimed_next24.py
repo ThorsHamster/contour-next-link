@@ -4,10 +4,8 @@ import logging
 # logging.basicConfig has to be before astm import, otherwise logs don't appear
 logging.basicConfig(format='%(asctime)s %(levelname)s [%(name)s] %(message)s', level=logging.WARNING)
 # a nasty workaround on missing hidapi.dll on my windows (allows testing from saved files, but not download of pump)
-try:
-    import hid # pip install hidapi - Platform independant
-except WindowsError:
-    pass
+
+import hid
 import astm # pip install astm
 import struct
 import binascii
@@ -19,8 +17,8 @@ import hashlib
 import re
 import pickle # needed for local history export
 import lzo # pip install python-lzo
-from .pump_history_parser import NGPHistoryEvent, BloodGlucoseReadingEvent
-from .helpers import DateTimeHelper
+from pump_history_parser import NGPHistoryEvent, BloodGlucoseReadingEvent
+from helpers import DateTimeHelper
 from datetime import time, timedelta
 
 logger = logging.getLogger(__name__)
@@ -1054,7 +1052,7 @@ class BayerBinaryMessage( object ):
 
 class Medtronic600SeriesDriver( object ):
     USB_BLOCKSIZE = 64
-    USB_VID = 0x1a79
+    USB_VID = 0x1A79
     USB_PID = 0x6210
     MAGIC_HEADER = b'ABC'
     
@@ -1076,12 +1074,11 @@ class Medtronic600SeriesDriver( object ):
 
     def openDevice( self ):
         logger.info("# Opening device")
-        self.device = hid.device()
-        self.device.open( self.USB_VID, self.USB_PID )
+        self.device = hid.Device(self.USB_VID, self.USB_PID)
 
-        logger.info("Manufacturer: %s" % self.device.get_manufacturer_string())
-        logger.info("Product: %s" % self.device.get_product_string())
-        logger.info("Serial No: %s" % self.device.get_serial_number_string())
+        logger.info("Manufacturer: %s" % self.device.manufacturer)
+        logger.info("Product: %s" % self.device.product)
+        logger.info("Serial No: %s" % self.device.serial)
     
     def closeDevice( self ):
         logger.info("# Closing device")
@@ -1096,9 +1093,10 @@ class Medtronic600SeriesDriver( object ):
         
         while first or (bytesRead > 0 and payloadSize == self.USB_BLOCKSIZE-4 and len(payload) != expectedSize):
             t = timeout_ms if first else 10000
-            data = self.device.read( self.USB_BLOCKSIZE, timeout_ms = t )
+            data = self.device.read( self.USB_BLOCKSIZE, timeout = t )
             first = False
             if data:
+                data = struct.unpack(">64B", data)
                 bytesRead = len(data)
                 payloadSize = data[3]
                 if( bytearray( data[0:3] ) != self.MAGIC_HEADER ):
@@ -1127,7 +1125,7 @@ class Medtronic600SeriesDriver( object ):
         # Split the message into 60 byte chunks
         for packet in [ payload[ i: i+60 ] for i in range( 0, len( payload ), 60 ) ]:
             message = struct.pack( '>3sB', self.MAGIC_HEADER, len( packet ) ) + packet
-            self.device.write( bytearray( message ) )
+            self.device.write( message )
             #logger.debug("SEND: " + binascii.hexlify( message )) # Debugging
 
     # Intercept unexpected messages from the CNL
