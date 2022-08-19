@@ -25,6 +25,8 @@ jobs:
         libtool 
         libudev-dev 
         libusb-1.0-0-dev 
+        libhidapi-dev
+        libhidapi-libusb0
         pkg-config 
         python
         python-dev 
