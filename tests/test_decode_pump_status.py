@@ -1,8 +1,6 @@
 import unittest
 from read_minimed_next24 import PumpStatusResponseMessage
 
-from datetime import datetime, time
-
 from test_helper import data_provider
 
 
