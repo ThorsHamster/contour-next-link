@@ -20,7 +20,6 @@ jobs:
         autoconf 
         build-essential 
         ca-certificates
-        git
         libc6
         liblzo2-dev 
         libtool 
@@ -31,7 +30,7 @@ jobs:
         pkg-config 
         python
         python-dev 
-        python-pip
+        python3-pip
         python-setuptools 
 
     - uses: actions/checkout@v2
