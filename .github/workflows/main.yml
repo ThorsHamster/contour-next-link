@@ -14,8 +14,6 @@ jobs:
       run: >
         sudo apt-get update &&
         export DEBIAN_FRONTEND=noninteractive &&
-        sudo add-apt-repository universe &&
-        sudo apt-get update &&
         sudo apt-get -y install --no-install-recommends
         autoconf 
         build-essential 
