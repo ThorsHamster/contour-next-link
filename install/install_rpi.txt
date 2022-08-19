@@ -4,7 +4,7 @@ pip install requests astm PyCrypto crc16 python-dateutil
 pip install python-lzo
 
 # Allow script running w/o root access
-sudo cp 30-bayer.rules to /etc/udev/rules.d/
+sudo cp 30-bayer.rules /etc/udev/rules.d/
 
 # Add group bayerusb
 sudo addgroup bayerusb
