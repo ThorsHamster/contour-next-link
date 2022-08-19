@@ -5,11 +5,9 @@ on: [push, pull_request]
 jobs:
   build:
     runs-on: ubuntu-latest
-    container:
-      image: debian:buster
     strategy:
       matrix:
-        python-version: [3.7]
+        python-version: [2.7]
 
     steps:
     - name: Install system packages
@@ -52,4 +50,4 @@ jobs:
 
     - name: Run unittests
       run: |
-        python -m unittest discover -t .
+        python -m unittest discover -t . -v
