@@ -1963,7 +1963,7 @@ def downloadPumpSession(downloadOperations):
                         return
                     mt.beginEHSM()
                     try:
-                        # We need to read always the pump time to store the offset for later messeging
+                        # We need to read always the pump time to store the offset for later messaging
                         mt.getPumpTime()
                         try:
                             downloadOperations(mt)
