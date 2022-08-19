@@ -1,8 +1,4 @@
-# decoding-contour-next-link
-
-[![Join the chat at https://gitter.im/pazaan/decoding-contour-next-link](https://badges.gitter.im/pazaan/decoding-contour-next-link.svg)](https://gitter.im/pazaan/decoding-contour-next-link?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-
-Space to collaborate on decoding Contour Next Link 2.4 comms protocols, and the piggy-backed pump comms
+# contour-next-link
 
 ## Getting Started
 * Make sure you have the following dependencies installed:  
@@ -15,24 +11,14 @@ Space to collaborate on decoding Contour Next Link 2.4 comms protocols, and the 
     * `libhidapi-dev`
     * `libhidapi-libusb0`
 
-
 * Clone this project
-* If you're running macOS (El Capitan or later), you'll need to update `setuptools` like this first (due to [System Integrity Protection](https://support.apple.com/en-au/HT204899)):
-```
-$ sudo -H pip install --upgrade setuptools --user python
-```
-* Install the dependencies:  
-```
-$ sudo -H pip install cython
-$ sudo -H pip install hidapi
-$ sudo -H pip install requests astm PyCrypto crc16 python-dateutil
-$ sudo -H pip install python-lzo
-```
+* Set linux udev rules, like described [here](install/Install.md)
+* Install the dependencies from requirements.txt  
 * Plug in your Contour NextLink 2.4 USB stick
 
 Now you can try the script by calling the module from the parent directory
 ```
-$ python -m decoding-contour-next-link.read_minimed_next24
+$ python -m read_minimed_next24
 Active Insulin: 0.000U
 Sensor BGL: 0 mg/dL (0.0 mmol/L) at Thu Jan  1 01:00:00 1970
 BGL trend: 3 arrows down
