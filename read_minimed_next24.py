@@ -2,10 +2,6 @@
 
 import logging
 
-# logging.basicConfig has to be before astm import, otherwise logs don't appear
-logging.basicConfig(format='%(asctime)s %(levelname)s [%(name)s] %(message)s', level=logging.WARNING)
-# a nasty workaround on missing hidapi.dll on my windows (allows testing from saved files, but not download of pump)
-
 import hid
 import astm  # pip install astm
 import struct
@@ -2059,17 +2055,5 @@ def pumpDownload(mt):
     # print (binascii.hexlify( mt.doRemoteSuspend().responsePayload ))
 
 
-def pumpDownloadEssential(mt):
-    status = mt.getPumpStatus()
-    print("Active Insulin: {0:.3f}U".format(status.activeInsulin))
-    print("Sensor BGL: {0} mg/dL at {1}".format(status.sensorBGL, status.sensorBGLTimestamp.strftime("%c")))
-    print("BGL trend: {0}".format(status.trendArrow))
-    print("Current basal rate: {0:.3f}U".format(status.currentBasalRate))
-    print("Temp basal rate: {0:.3f}U".format(status.tempBasalRate))
-    print("Temp basal percentage: {0}%".format(status.tempBasalPercentage))
-    print("Units remaining: {0:.3f}U".format(status.insulinUnitsRemaining))
-    print("Battery remaining: {0}%".format(status.batteryLevelPercentage))
-
-
 if __name__ == '__main__':
-    downloadPumpSession(pumpDownloadEssential)
+    downloadPumpSession(pumpDownload)
