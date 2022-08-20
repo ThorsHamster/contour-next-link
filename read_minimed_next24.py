@@ -1989,17 +1989,17 @@ def pumpDownload(mt):
     :type mt: Medtronic600SeriesDriver
     """
     status = mt.getPumpStatus()
-    print (binascii.hexlify(status.responsePayload))
-    print ("Active Insulin: {0:.3f}U".format(status.activeInsulin))
-    print ("Sensor BGL: {0} mg/dL ({1:.1f} mmol/L) at {2}".format(status.sensorBGL,
-                                                                  status.sensorBGL / 18.016,
-                                                                  status.sensorBGLTimestamp.strftime("%c")))
-    print ("BGL trend: {0}".format(status.trendArrow))
-    print ("Current basal rate: {0:.3f}U".format(status.currentBasalRate))
-    print ("Temp basal rate: {0:.3f}U".format(status.tempBasalRate))
-    print ("Temp basal percentage: {0}%".format(status.tempBasalPercentage))
-    print ("Units remaining: {0:.3f}U".format(status.insulinUnitsRemaining))
-    print ("Battery remaining: {0}%".format(status.batteryLevelPercentage))
+    print(binascii.hexlify(status.responsePayload))
+    print("Active Insulin: {0:.3f}U".format(status.activeInsulin))
+    print("Sensor BGL: {0} mg/dL ({1:.1f} mmol/L) at {2}".format(status.sensorBGL,
+                                                                 status.sensorBGL / 18.016,
+                                                                 status.sensorBGLTimestamp.strftime("%c")))
+    print("BGL trend: {0}".format(status.trendArrow))
+    print("Current basal rate: {0:.3f}U".format(status.currentBasalRate))
+    print("Temp basal rate: {0:.3f}U".format(status.tempBasalRate))
+    print("Temp basal percentage: {0}%".format(status.tempBasalPercentage))
+    print("Units remaining: {0:.3f}U".format(status.insulinUnitsRemaining))
+    print("Battery remaining: {0}%".format(status.batteryLevelPercentage))
 
     carbratios = mt.getBolusWizardCarbRatios()
     print("Carb ratios:")
@@ -2013,15 +2013,15 @@ def pumpDownload(mt):
     print("BG Targets")
     print(bgtargets.wholePayloadHex)
 
-    print ("Getting Pump history info")
+    print("Getting Pump history info")
     start_date = datetime.datetime.now() - datetime.timedelta(days=1)
     historyInfo = mt.getPumpHistoryInfo(start_date, datetime.datetime.max, HISTORY_DATA_TYPE.PUMP_DATA)
     # print (binascii.hexlify( historyInfo.responsePayload,  ))
-    print (" Pump Start: {0}".format(historyInfo.datetimeStart))
-    print (" Pump End: {0}".format(historyInfo.datetimeEnd));
-    print (" Pump Size: {0}".format(historyInfo.historySize));
+    print(" Pump Start: {0}".format(historyInfo.datetimeStart))
+    print(" Pump End: {0}".format(historyInfo.datetimeEnd));
+    print(" Pump Size: {0}".format(historyInfo.historySize));
 
-    print ("Getting Pump history")
+    print("Getting Pump history")
     history_pages = mt.getPumpHistory(historyInfo.historySize, start_date, datetime.datetime.max,
                                       HISTORY_DATA_TYPE.PUMP_DATA)
 
@@ -2030,19 +2030,19 @@ def pumpDownload(mt):
     #    pickle.dump(history_pages, output)
 
     events = mt.processPumpHistory(history_pages, HISTORY_DATA_TYPE.PUMP_DATA)
-    print ("# All Pump events:")
+    print("# All Pump events:")
     for ev in events:
-        print (" Pump: ", ev)
-    print ("# End Pump events")
+        print(" Pump: ", ev)
+    print("# End Pump events")
 
-    print ("Getting sensor history info")
+    print("Getting sensor history info")
     sensHistoryInfo = mt.getPumpHistoryInfo(start_date, datetime.datetime.max, HISTORY_DATA_TYPE.SENSOR_DATA)
     # print (binascii.hexlify( historyInfo.responsePayload,  ))
-    print (" Sensor Start: {0}".format(sensHistoryInfo.datetimeStart))
-    print (" Sensor End: {0}".format(sensHistoryInfo.datetimeEnd));
-    print (" Sensor Size: {0}".format(sensHistoryInfo.historySize));
+    print(" Sensor Start: {0}".format(sensHistoryInfo.datetimeStart))
+    print(" Sensor End: {0}".format(sensHistoryInfo.datetimeEnd));
+    print(" Sensor Size: {0}".format(sensHistoryInfo.historySize));
 
-    print ("Getting Sensor history")
+    print("Getting Sensor history")
     sensor_history_pages = mt.getPumpHistory(sensHistoryInfo.historySize, start_date, datetime.datetime.max,
                                              HISTORY_DATA_TYPE.SENSOR_DATA)
 
@@ -2051,24 +2051,24 @@ def pumpDownload(mt):
     #    pickle.dump(sensor_history_pages, output)
 
     sensorEvents = mt.processPumpHistory(sensor_history_pages, HISTORY_DATA_TYPE.SENSOR_DATA)
-    print ("# All Sensor events:")
+    print("# All Sensor events:")
     for ev in sensorEvents:
-        print (" Sensor", ev)
-    print ("# End Sensor events")
+        print(" Sensor", ev)
+    print("# End Sensor events")
 
     # print (binascii.hexlify( mt.doRemoteSuspend().responsePayload ))
 
 
 def pumpDownloadEssential(mt):
     status = mt.getPumpStatus()
-    print ("Active Insulin: {0:.3f}U".format(status.activeInsulin))
-    print ("Sensor BGL: {0} mg/dL at {1}".format(status.sensorBGL, status.sensorBGLTimestamp.strftime("%c")))
-    print ("BGL trend: {0}".format(status.trendArrow))
-    print ("Current basal rate: {0:.3f}U".format(status.currentBasalRate))
-    print ("Temp basal rate: {0:.3f}U".format(status.tempBasalRate))
-    print ("Temp basal percentage: {0}%".format(status.tempBasalPercentage))
-    print ("Units remaining: {0:.3f}U".format(status.insulinUnitsRemaining))
-    print ("Battery remaining: {0}%".format(status.batteryLevelPercentage))
+    print("Active Insulin: {0:.3f}U".format(status.activeInsulin))
+    print("Sensor BGL: {0} mg/dL at {1}".format(status.sensorBGL, status.sensorBGLTimestamp.strftime("%c")))
+    print("BGL trend: {0}".format(status.trendArrow))
+    print("Current basal rate: {0:.3f}U".format(status.currentBasalRate))
+    print("Temp basal rate: {0:.3f}U".format(status.tempBasalRate))
+    print("Temp basal percentage: {0}%".format(status.tempBasalPercentage))
+    print("Units remaining: {0:.3f}U".format(status.insulinUnitsRemaining))
+    print("Battery remaining: {0}%".format(status.batteryLevelPercentage))
 
 
 if __name__ == '__main__':
