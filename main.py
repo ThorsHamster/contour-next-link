@@ -2,12 +2,12 @@ import os
 import logging
 import time
 
-from read_minimed_next24 import Medtronic600SeriesDriver
-from homeassistant_uploader import HomeAssistantUploader
-
-logging.basicConfig(format='%(asctime)s %(levelname)s [%(name)s] %(message)s', level=logging.WARNING)
+logging.basicConfig(format='%(asctime)s %(levelname)s [%(name)s] %(message)s', level=logging.INFO)
 
 logger = logging.getLogger(__name__)
+
+from read_minimed_next24 import Medtronic600SeriesDriver
+from homeassistant_uploader import HomeAssistantUploader
 
 
 def get_and_upload_data(mt):
