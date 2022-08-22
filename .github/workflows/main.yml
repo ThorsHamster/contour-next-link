@@ -25,11 +25,10 @@ jobs:
         libusb-1.0-0-dev 
         libhidapi-dev
         libhidapi-libusb0
-        pkg-config 
-        python
-        python-dev 
+        pkg-config
+        python3-dev 
         python3-pip
-        python-setuptools 
+        python3-setuptools 
 
     - uses: actions/checkout@v2
 
