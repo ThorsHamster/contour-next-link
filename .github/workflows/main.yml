@@ -44,4 +44,4 @@ jobs:
 
     - name: Run unittests
       run: |
-        python -m unittest discover -t . -v
+        pipenv run python -m unittest discover -t . -v
