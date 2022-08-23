@@ -41,6 +41,7 @@ jobs:
       run: |
         python -m pip install --upgrade pipenv wheel
         pipenv install --deploy --dev
+        pipenv install pydantic
 
     - name: Run unittests
       run: |
