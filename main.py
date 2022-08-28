@@ -61,5 +61,8 @@ if __name__ == '__main__':
     mt = Medtronic600SeriesDriver()
 
     while True:
-        get_and_upload_data(mt)
-        time.sleep(DELAY_IN_MINUTES * 60)
+        try:
+            get_and_upload_data(mt)
+            time.sleep(DELAY_IN_MINUTES * 60)
+        except BaseException:
+            pass
