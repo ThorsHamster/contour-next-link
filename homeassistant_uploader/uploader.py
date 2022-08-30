@@ -15,19 +15,24 @@ class HomeAssistantUploader:
         self._client = Client(self._api_url, token)
 
     def update_states(self, medtronic_pump_status):
-        self._update_state(entity_id="sensor.minimed_bgl", state=medtronic_pump_status.sensorBGL)
-        self._update_state(entity_id="sensor.minimed_trend", state=medtronic_pump_status.trendArrow)
-        self._update_state(entity_id="sensor.minimed_active_insulin", state=medtronic_pump_status.activeInsulin)
-        self._update_state(entity_id="sensor.minimed_current_basal_rate", state=medtronic_pump_status.currentBasalRate)
-        self._update_state(entity_id="sensor.minimed_temp_basal_rate", state=medtronic_pump_status.tempBasalRate)
-        self._update_state(entity_id="sensor.minimed_temp_basal_rate_percentage",
-                           state=medtronic_pump_status.tempBasalPercentage)
-        self._update_state(entity_id="sensor.minimed_pump_battery_level",
-                           state=medtronic_pump_status.batteryLevelPercentage)
-        self._update_state(entity_id="sensor.minimed_insulin_units_remaining",
-                           state=medtronic_pump_status.insulinUnitsRemaining)
-        self._update_state(entity_id="sensor.minimed_update_timestamp",
-                           state=str(medtronic_pump_status.sensorBGLTimestamp.strftime("%H:%M:%S %d.%m.%Y")))
+        if self._is_data_valid(medtronic_pump_status):
+            self._update_state(entity_id="sensor.minimed_bgl", state=medtronic_pump_status.sensorBGL)
+            self._update_state(entity_id="sensor.minimed_trend", state=medtronic_pump_status.trendArrow)
+            self._update_state(entity_id="sensor.minimed_active_insulin", state=medtronic_pump_status.activeInsulin)
+            self._update_state(entity_id="sensor.minimed_current_basal_rate", state=medtronic_pump_status.currentBasalRate)
+            self._update_state(entity_id="sensor.minimed_temp_basal_rate", state=medtronic_pump_status.tempBasalRate)
+            self._update_state(entity_id="sensor.minimed_temp_basal_rate_percentage",
+                               state=medtronic_pump_status.tempBasalPercentage)
+            self._update_state(entity_id="sensor.minimed_pump_battery_level",
+                               state=medtronic_pump_status.batteryLevelPercentage)
+            self._update_state(entity_id="sensor.minimed_insulin_units_remaining",
+                               state=medtronic_pump_status.insulinUnitsRemaining)
+            self._update_state(entity_id="sensor.minimed_update_timestamp",
+                               state=str(medtronic_pump_status.sensorBGLTimestamp.strftime("%H:%M:%S %d.%m.%Y")))
+        
+    @staticmethod
+    def _is_data_valid(medtronic_pump_status) -> bool:
+        return str(medtronic_pump_status.sensorBGLTimestamp.strftime("%d.%m.%Y")) != "01.01.1970"
 
     def _update_state(self, entity_id, state):
         try:
