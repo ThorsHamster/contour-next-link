@@ -10,7 +10,8 @@ from read_minimed_next24 import Medtronic600SeriesDriver
 from homeassistant_uploader import HomeAssistantUploader
 
 
-def get_and_upload_data(mt):
+def get_and_upload_data():
+    mt = Medtronic600SeriesDriver()
     mt.openDevice()
     try:
         mt.getDeviceInfo()
@@ -58,11 +59,9 @@ if __name__ == '__main__':
 
     uploader = HomeAssistantUploader(token=TOKEN, ip=IP, port=PORT)
 
-    mt = Medtronic600SeriesDriver()
-
     while True:
         try:
-            get_and_upload_data(mt)
+            get_and_upload_data()
         except BaseException as ex:
             print(ex)
         time.sleep(DELAY_IN_MINUTES * 60)
