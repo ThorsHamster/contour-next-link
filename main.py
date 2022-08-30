@@ -1,6 +1,7 @@
 import os
 import logging
 import time
+import datetime
 
 logging.basicConfig(format='%(asctime)s %(levelname)s [%(name)s] %(message)s', level=logging.INFO)
 
@@ -13,6 +14,7 @@ from homeassistant_uploader import HomeAssistantUploader
 def get_and_upload_data():
     mt = Medtronic600SeriesDriver()
     mt.openDevice()
+    connected = False
     try:
         mt.getDeviceInfo()
         logger.info("Device serial: {0}".format(mt.deviceSerial))
@@ -36,6 +38,7 @@ def get_and_upload_data():
                         try:
                             status = mt.getPumpStatus()
                             uploader.update_states(status)
+                            connected = True
                         except Exception:
                             logger.error("Unexpected error in client downloadOperations", exc_info=True)
                             raise
@@ -49,6 +52,12 @@ def get_and_upload_data():
             mt.exitControlMode()
     finally:
         mt.closeDevice()
+
+    if connected:
+        uploader.update_status("Connected.")
+    else:
+        uploader.update_status("Not connected.")
+        uploader.update_timestamp(datetime.datetime.now().strftime("%H:%M:%S %d.%m.%Y"))
 
 
 if __name__ == '__main__':

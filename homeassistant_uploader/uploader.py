@@ -1,4 +1,5 @@
 import pydantic
+import datetime
 
 from homeassistant_api import Client
 
@@ -27,9 +28,11 @@ class HomeAssistantUploader:
                                state=medtronic_pump_status.batteryLevelPercentage)
             self._update_state(entity_id="sensor.minimed_insulin_units_remaining",
                                state=medtronic_pump_status.insulinUnitsRemaining)
-            self._update_state(entity_id="sensor.minimed_update_timestamp",
-                               state=str(medtronic_pump_status.sensorBGLTimestamp.strftime("%H:%M:%S %d.%m.%Y")))
-        
+            self.update_timestamp(state=str(medtronic_pump_status.sensorBGLTimestamp.strftime("%H:%M:%S %d.%m.%Y")))
+        else:
+            self.update_status("Invalid data.")
+            self.update_timestamp(datetime.datetime.now().strftime("%H:%M:%S %d.%m.%Y"))
+
     @staticmethod
     def _is_data_valid(medtronic_pump_status) -> bool:
         return str(medtronic_pump_status.sensorBGLTimestamp.strftime("%d.%m.%Y")) != "01.01.1970"
@@ -39,3 +42,9 @@ class HomeAssistantUploader:
             self._client.set_state(entity_id=entity_id, state=str(state))
         except pydantic.error_wrappers.ValidationError:
             pass
+
+    def update_status(self, state):
+        self._update_state(entity_id="sensor.minimed_status", state=str(state))
+
+    def update_timestamp(self, state):
+        self._update_state(entity_id="sensor.minimed_update_timestamp", state=str(state))
