@@ -53,11 +53,11 @@ def get_and_upload_data():
     finally:
         mt.closeDevice()
 
-    if connected:
-        uploader.update_status("Connected.")
-    else:
-        uploader.update_status("Not connected.")
-        uploader.update_timestamp(datetime.datetime.now().strftime("%H:%M:%S %d.%m.%Y"))
+        if connected:
+            uploader.update_status("Connected.")
+        else:
+            uploader.update_status("Not connected.")
+            uploader.update_timestamp(datetime.datetime.now().strftime("%H:%M:%S %d.%m.%Y"))
 
 
 if __name__ == '__main__':
