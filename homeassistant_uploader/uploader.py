@@ -51,3 +51,6 @@ class HomeAssistantUploader:
 
     def update_timestamp(self, state):
         self._update_state(entity_id="sensor.minimed_update_timestamp", state=str(state))
+
+    def update_event(self, state):
+        self._update_state(entity_id="sensor.minimed_message", state=str(state))
