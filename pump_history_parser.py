@@ -1,7 +1,6 @@
 from helpers import DateTimeHelper, BinaryDataDecoder, NumberHelper
 import struct
 import logging
-import binascii
 from datetime import timedelta
 
 logger = logging.getLogger(__name__)
