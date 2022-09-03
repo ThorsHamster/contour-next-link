@@ -263,11 +263,10 @@ class NGPHistoryEvent:
         return BinaryDataDecoder.readByte(self.eventData, 0x01)  # self.eventData[0x01];
 
     def __str__(self):
-        return '{0} {1:x} {2} {3}'.format(self.__class__.__name__, self.eventType, self.timestamp,
-                                          binascii.hexlify(self.eventData[0x0B:]))
+        return '{0} {1}'.format(self.__class__.__name__, self.timestamp)
 
     def __shortstr__(self):
-        return '{0} {1:x} {2}'.format(self.__class__.__name__, self.eventType, self.timestamp)
+        return '{0} {1}'.format(self.__class__.__name__, self.timestamp)
 
     def __repr__(self):
         return str(self)
