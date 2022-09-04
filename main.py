@@ -36,10 +36,42 @@ def get_pump_event_id(event):
     return binascii.hexlify(event.eventData[0x0B:][0:2])
 
 
-def get_and_upload_data():
+def update_states(uploader, medtronic_pump_status):
+    if is_data_valid(medtronic_pump_status):
+        uploader.update_status("Connected.")
+
+        uploader.update_bgl(state=medtronic_pump_status.sensorBGL)
+        uploader.update_trend(state=medtronic_pump_status.trendArrow)
+        uploader.update_active_insulin(state=medtronic_pump_status.activeInsulin)
+        uploader.update_current_basal_rate(state=medtronic_pump_status.currentBasalRate)
+        uploader.update_temp_basal_rate(state=medtronic_pump_status.tempBasalRate)
+        uploader.update_temp_basal_rate_percentage(state=medtronic_pump_status.tempBasalPercentage)
+        uploader.update_pump_battery_level(state=medtronic_pump_status.batteryLevelPercentage)
+        uploader.update_insulin_units_remaining(state=medtronic_pump_status.insulinUnitsRemaining)
+    else:
+        uploader.update_status("Invalid data.")
+
+        uploader.update_bgl(state="")
+        uploader.update_trend(state="")
+        uploader.update_active_insulin(state="")
+        uploader.update_current_basal_rate(state="")
+        uploader.update_temp_basal_rate(state="")
+        uploader.update_temp_basal_rate_percentage(state="")
+        uploader.update_pump_battery_level(state="")
+        uploader.update_insulin_units_remaining(state="")
+
+
+def is_data_valid(medtronic_pump_status) -> bool:
+    invalid_sensor_values = [0, 770]
+    return str(medtronic_pump_status.sensorBGLTimestamp.strftime(
+        "%d.%m.%Y")) != "01.01.1970" and medtronic_pump_status.sensorBGL not in invalid_sensor_values
+
+
+def get_and_upload_data() -> datetime.datetime:
     mt = Medtronic600SeriesDriver()
     mt.openDevice()
     connected = False
+    status = None
     try:
         mt.getDeviceInfo()
         logger.info("Device serial: {0}".format(mt.deviceSerial))
@@ -55,14 +87,14 @@ def get_and_upload_data():
                         mt.negotiateChannel()
                     except Exception:
                         logger.error("Cannot connect to the pump. Abandoning")
-                        return
+                        return datetime.datetime.now()
                     mt.beginEHSM()
                     try:
                         # We need to read always the pump time to store the offset for later messaging
                         mt.getPumpTime()
                         try:
                             status = mt.getPumpStatus()
-                            uploader.update_states(status)
+                            update_states(uploader, status)
                             events = get_pump_events(mt)
 
                             if not events:
@@ -89,10 +121,10 @@ def get_and_upload_data():
         mt.closeDevice()
 
         if connected:
-            uploader.update_status("Connected.")
+            return status.sensorBGLTimestamp
         else:
             uploader.update_status("Not connected.")
-            uploader.update_timestamp(datetime.datetime.now().strftime("%H:%M:%S %d.%m.%Y"))
+            return datetime.datetime.now()
 
 
 if __name__ == '__main__':
@@ -103,9 +135,20 @@ if __name__ == '__main__':
 
     uploader = HomeAssistantUploader(token=TOKEN, ip=IP, port=PORT)
 
+    waiting_time = datetime.datetime.now() + datetime.timedelta(minutes=5)
     while True:
         try:
-            get_and_upload_data()
+            timestamp = get_and_upload_data()
+            uploader.update_timestamp(state=timestamp.strftime("%H:%M:%S %d.%m.%Y"))
+
+            waiting_time = timestamp.replace(tzinfo=None) + datetime.timedelta(minutes=5,
+                                                                               seconds=30) - datetime.datetime.now()
+            print(waiting_time.seconds)
         except BaseException as ex:
             print(ex)
-        time.sleep(DELAY_IN_MINUTES * 60)
+        if waiting_time.seconds < 30:
+            time.sleep(30)
+        elif waiting_time.seconds > (6 * 60):
+            time.sleep(6 * 60)
+        else:
+            time.sleep(waiting_time.seconds)
