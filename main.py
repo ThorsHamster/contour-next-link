@@ -143,7 +143,6 @@ if __name__ == '__main__':
 
             waiting_time = timestamp.replace(tzinfo=None) + datetime.timedelta(minutes=5,
                                                                                seconds=30) - datetime.datetime.now()
-            print(waiting_time.seconds)
         except BaseException as ex:
             print(ex)
         if waiting_time.seconds < 30:
