@@ -14,8 +14,6 @@ from homeassistant_uploader import HomeAssistantUploader
 
 
 def get_pump_events(mt):
-    events_to_send = [AlarmNotificationEvent]
-
     start_date = datetime.datetime.now() - datetime.timedelta(minutes=10)
     history_pages = mt.getPumpHistory(None, start_date, datetime.datetime.max,
                                       HISTORY_DATA_TYPE.PUMP_DATA)
@@ -23,7 +21,7 @@ def get_pump_events(mt):
 
     events_found = {}
     for event in events:
-        if type(event) in events_to_send:
+        if type(event) == AlarmNotificationEvent:
             events_found[get_pump_event_id(event)] = event
         if type(event) == AlarmClearedEvent:
             if get_pump_event_id(event) in events_found:
