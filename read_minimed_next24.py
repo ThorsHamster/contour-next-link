@@ -178,7 +178,7 @@ class MedtronicSession(object):
     @property
     def hexKey(self):
         if self.config.key == "":
-            raise Exception("Key not found in config database. Run get_hmac_and_key.py to get populate HMAC and key.")
+            raise Exception("Key not found in config database.")
         return self.config.key
 
     @property
