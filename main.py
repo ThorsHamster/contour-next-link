@@ -60,9 +60,8 @@ def update_states(uploader, medtronic_pump_status):
 
 
 def is_data_valid(medtronic_pump_status) -> bool:
-    invalid_sensor_values = [0, 770]
     return str(medtronic_pump_status.sensorBGLTimestamp.strftime(
-        "%d.%m.%Y")) != "01.01.1970" and medtronic_pump_status.sensorBGL not in invalid_sensor_values
+        "%d.%m.%Y")) != "01.01.1970" and 0 < medtronic_pump_status.sensorBGL < 700
 
 
 def get_and_upload_data() -> datetime.datetime:
