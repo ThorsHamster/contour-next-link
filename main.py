@@ -107,14 +107,21 @@ class PumpConnector:
     def wait(self) -> None:
         minimum_waiting_time_in_seconds = 30
 
-        waiting_time = self._connection_timestamp.replace(tzinfo=None) + \
-                       datetime.timedelta(minutes=5, seconds=30)
+        switched_state = self._ha_connector.switched_on()
+
+        if switched_state:
+            waiting_time = self._connection_timestamp.replace(tzinfo=None) + \
+                           datetime.timedelta(minutes=5, seconds=30)
+        else:
+            waiting_time = datetime.datetime.now() + datetime.timedelta(minutes=5)
 
         if (waiting_time - datetime.datetime.now()).seconds < minimum_waiting_time_in_seconds:
             waiting_time = datetime.datetime.now() + datetime.timedelta(seconds=30)
 
-        while waiting_time > datetime.datetime.now() or self._ha_connector.switched_on() is False:
+        while waiting_time > datetime.datetime.now():
             time.sleep(5)
+            if self._ha_connector.switched_on() is not switched_state:
+                break
 
     def _get_pump_events(self) -> dict:
         start_date = datetime.datetime.now() - datetime.timedelta(minutes=10)
