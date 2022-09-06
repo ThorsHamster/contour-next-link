@@ -10,12 +10,12 @@ logger = logging.getLogger(__name__)
 
 from read_minimed_next24 import Medtronic600SeriesDriver, HISTORY_DATA_TYPE, PumpStatusResponseMessage
 from pump_history_parser import AlarmNotificationEvent, AlarmClearedEvent, NGPHistoryEvent
-from homeassistant_uploader import HomeAssistantUploader
+from homeassistant_connector import HomeAssistantConnector
 
 
 class PumpConnector:
-    def __init__(self, uploader):
-        self._uploader = uploader
+    def __init__(self, connector):
+        self._ha_connector = connector
 
         self._connected_successfully = False
         self._connection_timestamp = datetime.datetime.now()
@@ -27,11 +27,11 @@ class PumpConnector:
         self._start_communication()
 
         if not self._connected_successfully:
-            self._uploader.update_status("Not connected.")
+            self._ha_connector.update_status("Not connected.")
             self._reset_all_states()
             self._connection_timestamp = datetime.datetime.now()
 
-        self._uploader.update_timestamp(state=self._connection_timestamp.strftime("%H:%M:%S %d.%m.%Y"))
+        self._ha_connector.update_timestamp(state=self._connection_timestamp.strftime("%H:%M:%S %d.%m.%Y"))
         self._mt = None
 
     def _start_communication(self) -> None:
@@ -91,11 +91,11 @@ class PumpConnector:
                 events = self._get_pump_events()
 
                 if not events:
-                    self._uploader.update_event("")  # Reset message
+                    self._ha_connector.update_event("")  # Reset message
                 else:
                     for event in events:
                         logger.info(events[event])
-                        self._uploader.update_event(str(events[event]))
+                        self._ha_connector.update_event(str(events[event]))
                         time.sleep(1)  # time to process event on Homeassistant
 
             self._connected_successfully = True
@@ -147,30 +147,30 @@ class PumpConnector:
 
     def _update_states(self, medtronic_pump_status: PumpStatusResponseMessage) -> None:
         if self._data_is_valid(medtronic_pump_status):
-            self._uploader.update_status("Connected.")
+            self._ha_connector.update_status("Connected.")
 
-            self._uploader.update_bgl(state=medtronic_pump_status.sensorBGL)
-            self._uploader.update_trend(state=medtronic_pump_status.trendArrow)
-            self._uploader.update_active_insulin(state=medtronic_pump_status.activeInsulin)
-            self._uploader.update_current_basal_rate(state=medtronic_pump_status.currentBasalRate)
-            self._uploader.update_temp_basal_rate(state=medtronic_pump_status.tempBasalRate)
-            self._uploader.update_temp_basal_rate_percentage(state=medtronic_pump_status.tempBasalPercentage)
-            self._uploader.update_pump_battery_level(state=medtronic_pump_status.batteryLevelPercentage)
-            self._uploader.update_insulin_units_remaining(state=medtronic_pump_status.insulinUnitsRemaining)
+            self._ha_connector.update_bgl(state=medtronic_pump_status.sensorBGL)
+            self._ha_connector.update_trend(state=medtronic_pump_status.trendArrow)
+            self._ha_connector.update_active_insulin(state=medtronic_pump_status.activeInsulin)
+            self._ha_connector.update_current_basal_rate(state=medtronic_pump_status.currentBasalRate)
+            self._ha_connector.update_temp_basal_rate(state=medtronic_pump_status.tempBasalRate)
+            self._ha_connector.update_temp_basal_rate_percentage(state=medtronic_pump_status.tempBasalPercentage)
+            self._ha_connector.update_pump_battery_level(state=medtronic_pump_status.batteryLevelPercentage)
+            self._ha_connector.update_insulin_units_remaining(state=medtronic_pump_status.insulinUnitsRemaining)
         else:
-            self._uploader.update_status("Invalid data.")
+            self._ha_connector.update_status("Invalid data.")
             self._reset_all_states()
 
     def _reset_all_states(self) -> None:
-        self._uploader.update_bgl(state="")
-        self._uploader.update_trend(state="")
-        self._uploader.update_active_insulin(state="")
-        self._uploader.update_current_basal_rate(state="")
-        self._uploader.update_temp_basal_rate(state="")
-        self._uploader.update_temp_basal_rate_percentage(state="")
-        self._uploader.update_pump_battery_level(state="")
-        self._uploader.update_insulin_units_remaining(state="")
-        self._uploader.update_event(state="")
+        self._ha_connector.update_bgl(state="")
+        self._ha_connector.update_trend(state="")
+        self._ha_connector.update_active_insulin(state="")
+        self._ha_connector.update_current_basal_rate(state="")
+        self._ha_connector.update_temp_basal_rate(state="")
+        self._ha_connector.update_temp_basal_rate_percentage(state="")
+        self._ha_connector.update_pump_battery_level(state="")
+        self._ha_connector.update_insulin_units_remaining(state="")
+        self._ha_connector.update_event(state="")
 
     @staticmethod
     def _data_is_valid(medtronic_pump_status: PumpStatusResponseMessage) -> bool:
@@ -183,8 +183,8 @@ if __name__ == '__main__':
     IP = os.getenv("HOMEASSISTANT_IP")
     PORT = os.getenv("HOMEASSISTANT_PORT")
 
-    uploader = HomeAssistantUploader(token=TOKEN, ip=IP, port=PORT)
-    pump_connector = PumpConnector(uploader=uploader)
+    home_assistant_connector = HomeAssistantConnector(token=TOKEN, ip=IP, port=PORT)
+    pump_connector = PumpConnector(connector=home_assistant_connector)
 
     while True:
         try:

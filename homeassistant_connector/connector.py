@@ -4,7 +4,7 @@ import datetime
 from homeassistant_api import Client
 
 
-class HomeAssistantUploader:
+class HomeAssistantConnector:
     def __init__(self, token, ip, port):
         self._token = token
         self._api_url = "http://" + str(ip) + ":" + str(port) + "/api"
