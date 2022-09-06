@@ -21,6 +21,13 @@ class HomeAssistantConnector:
         except pydantic.error_wrappers.ValidationError:
             pass
 
+    def _get_state(self, entity_id) -> str:
+        try:
+            entity = self._client.get_entity(entity_id=entity_id)
+            return entity.get_state().state
+        except BaseException:
+            return ""
+
     def update_bgl(self, state):
         self._update_state(entity_id="sensor.minimed_bgl", state=state)
 
@@ -53,3 +60,6 @@ class HomeAssistantConnector:
 
     def update_event(self, state):
         self._update_state(entity_id="sensor.minimed_message", state=state)
+
+    def switched_on(self) -> bool:
+        return self._get_state(entity_id='input_boolean.medtronic_switch') == "on"

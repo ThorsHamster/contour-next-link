@@ -188,7 +188,11 @@ if __name__ == '__main__':
 
     while True:
         try:
-            pump_connector.get_and_upload_data()
+            if home_assistant_connector.switched_on():
+                pump_connector.get_and_upload_data()
+            else:
+                home_assistant_connector.update_status("Deactivated.")
+                home_assistant_connector.update_timestamp(state=datetime.datetime.now().strftime("%H:%M:%S %d.%m.%Y"))
         except BaseException as ex:
             print(ex)
         pump_connector.wait()
