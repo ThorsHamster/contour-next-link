@@ -106,18 +106,15 @@ class PumpConnector:
 
     def wait(self) -> None:
         minimum_waiting_time_in_seconds = 30
-        maximum_waiting_time_in_seconds = 6 * 60
 
         waiting_time = self._connection_timestamp.replace(tzinfo=None) + \
-                       datetime.timedelta(minutes=5, seconds=30) - datetime.datetime.now()
+                       datetime.timedelta(minutes=5, seconds=30)
 
-        waiting_time_in_seconds = waiting_time.seconds
-        if waiting_time_in_seconds < minimum_waiting_time_in_seconds:
-            waiting_time_in_seconds = minimum_waiting_time_in_seconds
-        if waiting_time_in_seconds > maximum_waiting_time_in_seconds:
-            waiting_time_in_seconds = maximum_waiting_time_in_seconds
+        if (waiting_time - datetime.datetime.now()).seconds < minimum_waiting_time_in_seconds:
+            waiting_time = datetime.datetime.now() + datetime.timedelta(seconds=30)
 
-        time.sleep(waiting_time_in_seconds)
+        while waiting_time > datetime.datetime.now() or self._ha_connector.switched_on() is False:
+            time.sleep(5)
 
     def _get_pump_events(self) -> dict:
         start_date = datetime.datetime.now() - datetime.timedelta(minutes=10)
@@ -189,6 +186,7 @@ if __name__ == '__main__':
     while True:
         try:
             if home_assistant_connector.switched_on():
+                home_assistant_connector.update_status("Requesting data.")
                 pump_connector.get_and_upload_data()
             else:
                 home_assistant_connector.update_status("Deactivated.")
