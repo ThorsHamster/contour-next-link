@@ -143,6 +143,7 @@ class PumpConnector:
     @staticmethod
     def _is_pump_event_new(event: NGPHistoryEvent) -> bool:
         time_delta = datetime.datetime.now() - event.timestamp.replace(tzinfo=None)
+        print(event)
         print(time_delta.seconds)
         return time_delta.seconds < 15 * 60
 
