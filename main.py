@@ -127,17 +127,24 @@ class PumpConnector:
 
         events_found = {}
         for event in events:
-            if type(event) == AlarmNotificationEvent:
-                events_found[self._get_pump_event_id(event)] = event
-            if type(event) == AlarmClearedEvent:
-                if self._get_pump_event_id(event) in events_found:
-                    del events_found[self._get_pump_event_id(event)]
+            if self._is_pump_event_new(event):
+                if type(event) == AlarmNotificationEvent:
+                    events_found[self._get_pump_event_id(event)] = event
+                if type(event) == AlarmClearedEvent:
+                    if self._get_pump_event_id(event) in events_found:
+                        del events_found[self._get_pump_event_id(event)]
 
         return events_found
 
     @staticmethod
     def _get_pump_event_id(event: NGPHistoryEvent):
         return binascii.hexlify(event.eventData[0x0B:][0:2])
+
+    @staticmethod
+    def _is_pump_event_new(event: NGPHistoryEvent) -> bool:
+        time_delta = datetime.datetime.now() - event.timestamp.replace(tzinfo=None)
+        print(time_delta.seconds)
+        return time_delta.seconds < 15 * 60
 
     def _update_states(self, medtronic_pump_status: PumpStatusResponseMessage) -> None:
         if self._data_is_valid(medtronic_pump_status):
