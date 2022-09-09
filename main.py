@@ -98,8 +98,11 @@ class PumpConnector:
                         self._ha_connector.update_event(str(events[event]))
                         time.sleep(1)  # time to process event on Homeassistant
 
+                self._connection_timestamp = status.sensorBGLTimestamp
+            else:
+                self._connection_timestamp = datetime.datetime.now()
+
             self._connected_successfully = True
-            self._connection_timestamp = status.sensorBGLTimestamp
         except Exception:
             logger.error("Unexpected error in while downloading data", exc_info=True)
             raise
