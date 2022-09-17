@@ -20,6 +20,7 @@ class PumpConnector:
         self._connected_successfully = False
         self._connection_timestamp = datetime.datetime.now()
         self._mt = None
+        self._set_change_timestamp = None
 
     def get_and_upload_data(self) -> None:
         self._connected_successfully = False
@@ -89,8 +90,14 @@ class PumpConnector:
 
             if self._data_is_valid(status):
                 events = self._request_pump_events()
+
+                if self._set_change_timestamp is not None:
+                    days_ago = (datetime.datetime.now() - self._set_change_timestamp).days
+                    self._ha_connector.update_latest_set_change(f"{days_ago} days ago")
+                else:
+                    self._ha_connector.update_latest_set_change("")
+
                 not_acknowledged_alarms = self._get_not_acknowledged_pump_alarms(events)
-                self._ha_connector.update_latest_set_change(self._get_set_change_timestamp(events))
 
                 if not not_acknowledged_alarms:
                     self._ha_connector.update_event("")  # Reset message
@@ -147,21 +154,12 @@ class PumpConnector:
 
         return events_found
 
-    @staticmethod
-    def _get_set_change_timestamp(events: list) -> str:
-        set_change_timestamp = None
-
+    def _get_set_change_timestamp(self, events: list) -> None:
         for event in events:
             if type(event) == InsulinDeliveryStoppedEvent:
                 if event.suspendReasonText == "Set change suspend":
-                    set_change_timestamp = event.timestamp
+                    self._set_change_timestamp = event.timestamp
                     break
-
-        if set_change_timestamp is None:
-            return ""
-        else:
-            days_ago = (datetime.datetime.now() - set_change_timestamp).days
-            return f"{days_ago} days ago"
 
     @staticmethod
     def _get_pump_event_id(event: NGPHistoryEvent):
