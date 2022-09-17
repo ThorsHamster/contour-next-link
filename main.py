@@ -9,7 +9,7 @@ logging.basicConfig(format='%(asctime)s %(levelname)s [%(name)s] %(message)s', l
 logger = logging.getLogger(__name__)
 
 from read_minimed_next24 import Medtronic600SeriesDriver, HISTORY_DATA_TYPE, PumpStatusResponseMessage
-from pump_history_parser import AlarmNotificationEvent, AlarmClearedEvent, NGPHistoryEvent
+from pump_history_parser import AlarmNotificationEvent, AlarmClearedEvent, NGPHistoryEvent, InsulinDeliveryStoppedEvent
 from homeassistant_connector import HomeAssistantConnector
 
 
@@ -88,7 +88,9 @@ class PumpConnector:
             self._update_states(status)
 
             if self._data_is_valid(status):
-                not_acknowledged_alarms = self._get_not_acknowledged_pump_alarms()
+                events = self._request_pump_events()
+                not_acknowledged_alarms = self._get_not_acknowledged_pump_alarms(events)
+                self._ha_connector.update_latest_set_change(self._get_set_change_timestamp(events))
 
                 if not not_acknowledged_alarms:
                     self._ha_connector.update_event("")  # Reset message
@@ -126,12 +128,14 @@ class PumpConnector:
             if self._ha_connector.switched_on() is not switched_state:
                 break
 
-    def _get_not_acknowledged_pump_alarms(self) -> dict:
+    def _request_pump_events(self) -> list:
         start_date = datetime.datetime.now() - datetime.timedelta(minutes=10)
         history_pages = self._mt.getPumpHistory(None, start_date, datetime.datetime.max,
                                                 HISTORY_DATA_TYPE.PUMP_DATA)
         events = self._mt.processPumpHistory(history_pages, HISTORY_DATA_TYPE.PUMP_DATA)
+        return events
 
+    def _get_not_acknowledged_pump_alarms(self, events: list) -> dict:
         events_found = {}
         for event in events:
             if self._is_pump_event_new(event):
@@ -142,6 +146,22 @@ class PumpConnector:
                         del events_found[self._get_pump_event_id(event)]
 
         return events_found
+
+    @staticmethod
+    def _get_set_change_timestamp(events: list) -> str:
+        set_change_timestamp = None
+
+        for event in events:
+            if type(event) == InsulinDeliveryStoppedEvent:
+                if event.suspendReasonText == "Set change suspend":
+                    set_change_timestamp = event.timestamp
+                    break
+
+        if set_change_timestamp is None:
+            return ""
+        else:
+            days_ago = (datetime.datetime.now() - set_change_timestamp).days
+            return f"{days_ago} days ago"
 
     @staticmethod
     def _get_pump_event_id(event: NGPHistoryEvent):
