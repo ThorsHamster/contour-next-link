@@ -61,5 +61,8 @@ class HomeAssistantConnector:
     def update_event(self, state):
         self._update_state(entity_id="sensor.minimed_message", state=state)
 
+    def update_latest_set_change(self, state):
+        self._update_state(entity_id="sensor.minimed_set_change_timestamp", state=state)
+
     def switched_on(self) -> bool:
         return self._get_state(entity_id='input_boolean.medtronic_switch') == "on"
