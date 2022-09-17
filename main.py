@@ -29,7 +29,7 @@ class PumpConnector:
 
         if not self._connected_successfully:
             self._ha_connector.update_status("Not connected.")
-            self._reset_all_states()
+            self.reset_all_states()
             self._connection_timestamp = datetime.datetime.now()
 
         self._ha_connector.update_timestamp(state=self._connection_timestamp.strftime("%H:%M:%S %d.%m.%Y"))
@@ -184,9 +184,9 @@ class PumpConnector:
             self._ha_connector.update_insulin_units_remaining(state=medtronic_pump_status.insulinUnitsRemaining)
         else:
             self._ha_connector.update_status("Invalid data.")
-            self._reset_all_states()
+            self.reset_all_states()
 
-    def _reset_all_states(self) -> None:
+    def reset_all_states(self) -> None:
         self._ha_connector.update_bgl(state="")
         self._ha_connector.update_trend(state="")
         self._ha_connector.update_active_insulin(state="")
