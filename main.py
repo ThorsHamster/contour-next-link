@@ -218,6 +218,7 @@ if __name__ == '__main__':
                 pump_connector.get_and_upload_data()
             else:
                 home_assistant_connector.update_status("Deactivated.")
+                pump_connector.reset_all_states()
                 home_assistant_connector.update_timestamp(state=datetime.datetime.now().strftime("%H:%M:%S %d.%m.%Y"))
         except BaseException as ex:
             print(ex)
