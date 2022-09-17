@@ -88,14 +88,14 @@ class PumpConnector:
             self._update_states(status)
 
             if self._data_is_valid(status):
-                events = self._get_pump_events()
+                not_acknowledged_alarms = self._get_not_acknowledged_pump_alarms()
 
-                if not events:
+                if not not_acknowledged_alarms:
                     self._ha_connector.update_event("")  # Reset message
                 else:
-                    for event in events:
-                        logger.info(events[event])
-                        self._ha_connector.update_event(str(events[event]))
+                    for not_acknowledged_alarm in not_acknowledged_alarms:
+                        logger.info(not_acknowledged_alarms[not_acknowledged_alarm])
+                        self._ha_connector.update_event(str(not_acknowledged_alarms[not_acknowledged_alarm]))
                         time.sleep(1)  # time to process event on Homeassistant
 
                 self._connection_timestamp = status.sensorBGLTimestamp
@@ -126,7 +126,7 @@ class PumpConnector:
             if self._ha_connector.switched_on() is not switched_state:
                 break
 
-    def _get_pump_events(self) -> dict:
+    def _get_not_acknowledged_pump_alarms(self) -> dict:
         start_date = datetime.datetime.now() - datetime.timedelta(minutes=10)
         history_pages = self._mt.getPumpHistory(None, start_date, datetime.datetime.max,
                                                 HISTORY_DATA_TYPE.PUMP_DATA)
