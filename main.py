@@ -91,8 +91,9 @@ class PumpConnector:
             if self._data_is_valid(status):
                 events = self._request_pump_events()
 
+                self._get_set_change_timestamp(events)
                 if self._set_change_timestamp is not None:
-                    days_ago = (datetime.datetime.now() - self._set_change_timestamp).days
+                    days_ago = (datetime.datetime.now() - self._set_change_timestamp.replace(tzinfo=None)).days
                     self._ha_connector.update_latest_set_change(f"{days_ago} days ago")
                 else:
                     self._ha_connector.update_latest_set_change("")
