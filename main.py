@@ -9,7 +9,7 @@ logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=loggin
 
 logger = logging.getLogger('app')
 
-logHandler = handlers.RotatingFileHandler('log.txt', maxBytes=1000, backupCount=2)
+logHandler = handlers.RotatingFileHandler('log.txt', maxBytes=1000000, backupCount=2)
 formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 logHandler.setFormatter(formatter)
 logger.addHandler(logHandler)
