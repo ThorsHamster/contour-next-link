@@ -7,7 +7,7 @@ import binascii
 
 logging.basicConfig(format='%(asctime)s %(levelname)s [%(name)s] %(message)s', level=logging.INFO)
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('app')
 
 logHandler = handlers.RotatingFileHandler('log.txt', maxBytes=1000, backupCount=2)
 logger.addHandler(logHandler)

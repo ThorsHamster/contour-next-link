@@ -3,7 +3,7 @@ import struct
 import logging
 from datetime import timedelta
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('app')
 
 
 class NGPConstants:

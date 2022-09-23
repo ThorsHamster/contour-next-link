@@ -18,7 +18,7 @@ from pump_history_parser import NGPHistoryEvent, BloodGlucoseReadingEvent
 from helpers import DateTimeHelper
 from datetime import time, timedelta
 
-logger = logging.getLogger(__name__)
+logger = logging.getLogger('app')
 
 ascii = {
     'ACK': 0x06,
