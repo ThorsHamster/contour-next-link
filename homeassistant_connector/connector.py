@@ -40,9 +40,6 @@ class HomeAssistantConnector:
     def update_current_basal_rate(self, state):
         self._update_state(entity_id="sensor.minimed_current_basal_rate", state=state)
 
-    def update_temp_basal_rate(self, state):
-        self._update_state(entity_id="sensor.minimed_temp_basal_rate", state=state)
-
     def update_temp_basal_rate_percentage(self, state):
         self._update_state(entity_id="sensor.minimed_temp_basal_rate_percentage", state=state)
 
