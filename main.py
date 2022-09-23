@@ -5,11 +5,13 @@ import time
 import datetime
 import binascii
 
-logging.basicConfig(format='%(asctime)s %(levelname)s [%(name)s] %(message)s', level=logging.INFO)
+logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO)
 
 logger = logging.getLogger('app')
 
 logHandler = handlers.RotatingFileHandler('log.txt', maxBytes=1000, backupCount=2)
+formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
+logHandler.setFormatter(formatter)
 logger.addHandler(logHandler)
 
 from read_minimed_next24 import Medtronic600SeriesDriver, HISTORY_DATA_TYPE, PumpStatusResponseMessage
