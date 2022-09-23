@@ -1,5 +1,6 @@
 import os
 import logging
+import logging.handlers as handlers
 import time
 import datetime
 import binascii
@@ -7,6 +8,9 @@ import binascii
 logging.basicConfig(format='%(asctime)s %(levelname)s [%(name)s] %(message)s', level=logging.INFO)
 
 logger = logging.getLogger(__name__)
+
+logHandler = handlers.RotatingFileHandler('log.txt', maxBytes=1000, backupCount=2)
+logger.addHandler(logHandler)
 
 from read_minimed_next24 import Medtronic600SeriesDriver, HISTORY_DATA_TYPE, PumpStatusResponseMessage
 from pump_history_parser import AlarmNotificationEvent, AlarmClearedEvent, NGPHistoryEvent, InsulinDeliveryStoppedEvent
