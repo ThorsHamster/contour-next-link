@@ -395,7 +395,11 @@ class MedtronicReceiveMessage(MedtronicMessage):
 
     @property
     def messageType(self):
-        return struct.unpack('>H', self.responsePayload[1:3])[0]
+        try:
+            return struct.unpack('>H', self.responsePayload[1:3])[0]
+        except struct.error as ex:
+            print(self.responsePayload[1:3])
+            raise ex
 
     @property
     def wholePayloadHex(self):
