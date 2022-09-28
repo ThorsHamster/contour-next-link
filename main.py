@@ -100,8 +100,6 @@ class PumpConnector:
                 self._get_set_change_timestamp(events)
                 if self._set_change_timestamp is not None:
                     self._ha_connector.update_latest_set_change(self._set_change_timestamp.strftime("%A"))
-                else:
-                    self._ha_connector.update_latest_set_change("")
 
                 not_acknowledged_alarms = self._get_not_acknowledged_pump_alarms(events)
 
