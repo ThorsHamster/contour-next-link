@@ -4,6 +4,7 @@ import logging.handlers as handlers
 import time
 import datetime
 import binascii
+import subprocess
 
 logging.basicConfig(format='%(asctime)s %(levelname)s %(message)s', level=logging.INFO)
 
@@ -44,6 +45,14 @@ class PumpConnector:
     def _start_communication(self) -> None:
         try:
             self._mt = Medtronic600SeriesDriver()
+
+            if self._mt is None:
+                logger.warning("Loading of device driver failed. Try to reset device.")
+                self._ha_connector.update_status("Driver fail.")
+                self._reset_timestamp_after_fail()
+                self._reset_usb_device()
+                return
+
             self._mt.openDevice()
             self._enter_control_mode()
         finally:
@@ -207,6 +216,12 @@ class PumpConnector:
 
     def _reset_timestamp_after_fail(self):
         self._connection_timestamp = datetime.datetime.now()
+
+    @staticmethod
+    def _reset_usb_device():
+        logger.warning("Reset of USB drive. User needs sudo permissions for this file!")
+        proc = subprocess.Popen(['sudo', './install/usb_reset.sh'])
+        proc.wait()
 
 
 if __name__ == '__main__':
