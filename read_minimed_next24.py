@@ -399,7 +399,7 @@ class MedtronicReceiveMessage(MedtronicMessage):
         try:
             return struct.unpack('>H', self.responsePayload[1:3])[0]
         except struct.error as ex:
-            logging.error(self.responsePayload)
+            logger.error(self.responsePayload)
             raise ex
 
     @property
