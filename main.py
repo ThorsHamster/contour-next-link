@@ -118,7 +118,7 @@ class PumpConnector:
 
             self._connected_successfully = True
         except Exception:
-            logger.error("Unexpected error in while downloading data", exc_info=True)
+            logger.error("Unexpected error while downloading data", exc_info=True)
             raise
 
     def wait(self) -> None:
