@@ -2,6 +2,8 @@
 
 import logging
 
+logger = logging.getLogger('app')
+
 import hid
 import astm  # pip install astm
 import struct
@@ -18,7 +20,6 @@ from pump_history_parser import NGPHistoryEvent, BloodGlucoseReadingEvent
 from helpers import DateTimeHelper
 from datetime import time, timedelta
 
-logger = logging.getLogger('app')
 
 ascii = {
     'ACK': 0x06,
