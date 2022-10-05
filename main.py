@@ -36,7 +36,7 @@ class PumpConnector:
         if not self._connected_successfully:
             self._ha_connector.update_status("Not connected.")
             self.reset_all_states()
-            self._connection_timestamp = datetime.datetime.now()
+            self._reset_timestamp_after_fail()
 
         self._ha_connector.update_timestamp(state=self._connection_timestamp.strftime("%H:%M:%S %d.%m.%Y"))
         self._mt = None
@@ -75,7 +75,7 @@ class PumpConnector:
                 self._begin_high_speed_mode()
             except Exception:
                 logger.error("Cannot connect to the pump. Abandoning")
-                self._connection_timestamp = datetime.datetime.now()
+                self._reset_timestamp_after_fail()
                 return
         finally:
             self._mt.closeConnection()
@@ -114,7 +114,7 @@ class PumpConnector:
 
                 self._connection_timestamp = status.sensorBGLTimestamp
             else:
-                self._connection_timestamp = datetime.datetime.now()
+                self._reset_timestamp_after_fail()
 
             self._connected_successfully = True
         except Exception:
@@ -204,6 +204,9 @@ class PumpConnector:
     def _data_is_valid(medtronic_pump_status: PumpStatusResponseMessage) -> bool:
         return str(medtronic_pump_status.sensorBGLTimestamp.strftime(
             "%d.%m.%Y")) != "01.01.1970" and 0 < medtronic_pump_status.sensorBGL < 700
+
+    def _reset_timestamp_after_fail(self):
+        self._connection_timestamp = datetime.datetime.now()
 
 
 if __name__ == '__main__':
