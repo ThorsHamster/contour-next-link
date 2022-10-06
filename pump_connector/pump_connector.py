@@ -9,7 +9,7 @@ logger = logging.getLogger('app')
 from read_minimed_next24 import Medtronic600SeriesDriver, HISTORY_DATA_TYPE, PumpStatusResponseMessage
 from pump_history_parser import AlarmNotificationEvent, AlarmClearedEvent, NGPHistoryEvent, InsulinDeliveryStoppedEvent
 from homeassistant_connector import HomeAssistantConnector
-from .helper import get_datetime_now
+from pump_connector.helper import get_datetime_now
 
 
 class PumpConnector:
@@ -128,14 +128,16 @@ class PumpConnector:
 
         switched_state = self._ha_connector.switched_on()
 
+        datetime_now = get_datetime_now()
+
         if switched_state:
             waiting_time = self._connection_timestamp.replace(tzinfo=None) + \
                            datetime.timedelta(minutes=5, seconds=30)
         else:
-            waiting_time = get_datetime_now() + datetime.timedelta(minutes=5)
+            waiting_time = datetime_now + datetime.timedelta(minutes=5)
 
-        if (waiting_time - get_datetime_now()).seconds < minimum_waiting_time_in_seconds:
-            waiting_time = get_datetime_now() + datetime.timedelta(seconds=30)
+        if (waiting_time - datetime_now).seconds < minimum_waiting_time_in_seconds:
+            waiting_time = datetime_now + datetime.timedelta(seconds=30)
 
         while waiting_time > get_datetime_now():
             time.sleep(5)
