@@ -40,6 +40,8 @@ class PumpConnector:
 
             self._mt.openDevice()
 
+            self._enter_control_mode()
+        finally:
             if self._mt.device is None:
                 logger.warning("Loading of device driver failed. Try to reset device.")
                 self._ha_connector.update_status("Driver fail.")
@@ -47,8 +49,6 @@ class PumpConnector:
                 self._reset_usb_device()
                 return
 
-            self._enter_control_mode()
-        finally:
             self._mt.closeDevice()
 
     def _enter_control_mode(self) -> None:
