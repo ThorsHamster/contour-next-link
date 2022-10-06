@@ -46,14 +46,15 @@ class PumpConnector:
         try:
             self._mt = Medtronic600SeriesDriver()
 
-            if self._mt is None:
+            self._mt.openDevice()
+
+            if self._mt.device is None:
                 logger.warning("Loading of device driver failed. Try to reset device.")
                 self._ha_connector.update_status("Driver fail.")
                 self._reset_timestamp_after_fail()
                 self._reset_usb_device()
                 return
 
-            self._mt.openDevice()
             self._enter_control_mode()
         finally:
             self._mt.closeDevice()
