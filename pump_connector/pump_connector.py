@@ -9,6 +9,7 @@ logger = logging.getLogger('app')
 from read_minimed_next24 import Medtronic600SeriesDriver, HISTORY_DATA_TYPE, PumpStatusResponseMessage
 from pump_history_parser import AlarmNotificationEvent, AlarmClearedEvent, NGPHistoryEvent, InsulinDeliveryStoppedEvent
 from homeassistant_connector import HomeAssistantConnector
+from .helper import get_datetime_now
 
 
 class PumpConnector:
@@ -16,7 +17,7 @@ class PumpConnector:
         self._ha_connector = connector
 
         self._connected_successfully = False
-        self._connection_timestamp = self._get_datetime_now()
+        self._connection_timestamp = get_datetime_now()
         self._mt = None
         self._set_change_timestamp = None
 
@@ -37,14 +38,15 @@ class PumpConnector:
         try:
             self._mt = Medtronic600SeriesDriver()
 
-            if self._mt is None:
+            self._mt.openDevice()
+
+            if self._mt.device is None:
                 logger.warning("Loading of device driver failed. Try to reset device.")
                 self._ha_connector.update_status("Driver fail.")
                 self._reset_timestamp_after_fail()
                 self._reset_usb_device()
                 return
 
-            self._mt.openDevice()
             self._enter_control_mode()
         finally:
             self._mt.closeDevice()
@@ -130,21 +132,18 @@ class PumpConnector:
             waiting_time = self._connection_timestamp.replace(tzinfo=None) + \
                            datetime.timedelta(minutes=5, seconds=30)
         else:
-            waiting_time = self._get_datetime_now() + datetime.timedelta(minutes=5)
+            waiting_time = get_datetime_now() + datetime.timedelta(minutes=5)
 
-        if (waiting_time - self._get_datetime_now()).seconds < minimum_waiting_time_in_seconds:
-            waiting_time = self._get_datetime_now() + datetime.timedelta(seconds=30)
+        if (waiting_time - get_datetime_now()).seconds < minimum_waiting_time_in_seconds:
+            waiting_time = get_datetime_now() + datetime.timedelta(seconds=30)
 
-        while waiting_time > self._get_datetime_now():
+        while waiting_time > get_datetime_now():
             time.sleep(5)
             if self._ha_connector.switched_on() is not switched_state:
                 break
 
-    def _get_datetime_now(self) -> datetime.datetime:
-        return datetime.datetime.now()
-
     def _request_pump_events(self) -> list:
-        start_date = self._get_datetime_now() - datetime.timedelta(minutes=10)
+        start_date = get_datetime_now() - datetime.timedelta(minutes=10)
         history_pages = self._mt.getPumpHistory(None, start_date, datetime.datetime.max,
                                                 HISTORY_DATA_TYPE.PUMP_DATA)
         events = self._mt.processPumpHistory(history_pages, HISTORY_DATA_TYPE.PUMP_DATA)
@@ -174,7 +173,7 @@ class PumpConnector:
         return binascii.hexlify(event.eventData[0x0B:][0:2])
 
     def _is_pump_event_new(self, event: NGPHistoryEvent) -> bool:
-        time_delta = self._get_datetime_now() - event.timestamp.replace(tzinfo=None)
+        time_delta = get_datetime_now() - event.timestamp.replace(tzinfo=None)
         return time_delta.seconds < 15 * 60
 
     def _update_states(self, medtronic_pump_status: PumpStatusResponseMessage) -> None:
@@ -208,7 +207,7 @@ class PumpConnector:
             "%d.%m.%Y")) != "01.01.1970" and 0 < medtronic_pump_status.sensorBGL < 700
 
     def _reset_timestamp_after_fail(self):
-        self._connection_timestamp = self._get_datetime_now()
+        self._connection_timestamp = get_datetime_now()
 
     @staticmethod
     def _reset_usb_device():
