@@ -24,8 +24,8 @@ class TestPumpConnector:
     def test_wait(self, mocker):
         self.mock_dependencies(mocker)
 
-        self.mock_get_datetime_now.side_effect = [datetime.datetime(2022, 1, 1, 12, 00, 00, 0),
-                                                  datetime.datetime(2022, 1, 1, 12, 00, 00, 0),
+        self.mock_get_datetime_now.side_effect = [datetime.datetime(2022, 1, 1, 12, 00, 00, 0),  # init of class
+                                                  datetime.datetime(2022, 1, 1, 12, 00, 00, 0),  # first call of wait
                                                   datetime.datetime(2022, 1, 1, 12, 00, 5, 0),
                                                   datetime.datetime(2022, 1, 1, 12, 00, 7, 0),
                                                   datetime.datetime(2022, 1, 1, 12, 5, 30, 0),
