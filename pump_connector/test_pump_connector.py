@@ -5,7 +5,6 @@ from pump_connector import PumpConnector
 
 
 class TestPumpConnector:
-
     waiting_time_in_seconds = 5
 
     def create_unit_under_test(self):
@@ -22,7 +21,7 @@ class TestPumpConnector:
                             stepsize: datetime.timedelta) -> list:
         step = start_datetime
 
-        list_of_datetimes = [start_datetime, start_datetime]  # double first entry, because of init of PumpConnector
+        list_of_datetimes = [start_datetime]
         while step < end_datetime:
             step = step + stepsize
             list_of_datetimes.append(step)
@@ -33,7 +32,8 @@ class TestPumpConnector:
         self.mock_dependencies(mocker)
 
         self.mock_connector.switched_on.return_value = True
-        self.mock_get_datetime_now.side_effect = self._generate_datetimes(
+        self.mock_get_datetime_now.side_effect = [datetime.datetime(2022, 1, 1, 12, 00, 00,
+                                                                    0)] + self._generate_datetimes(
             start_datetime=datetime.datetime(2022, 1, 1, 12, 00, 00, 0),
             end_datetime=datetime.datetime(2022, 1, 1, 12, 10, 00, 0),
             stepsize=datetime.timedelta(seconds=5))
@@ -42,13 +42,14 @@ class TestPumpConnector:
 
         unit_under_test.wait()
 
-        assert self.mock_sleep.call_count == (5*60+30)/self.waiting_time_in_seconds
+        assert self.mock_sleep.call_count == (5 * 60 + 30) / self.waiting_time_in_seconds
 
     def test_wait_switch_is_off(self, mocker):
         self.mock_dependencies(mocker)
 
         self.mock_connector.switched_on.side_effect = 200 * [False]
-        self.mock_get_datetime_now.side_effect = self._generate_datetimes(
+        self.mock_get_datetime_now.side_effect = [datetime.datetime(2022, 1, 1, 12, 00, 00,
+                                                                    0)] + self._generate_datetimes(
             start_datetime=datetime.datetime(2022, 1, 1, 12, 00, 00, 0),
             end_datetime=datetime.datetime(2022, 1, 1, 12, 10, 00, 0),
             stepsize=datetime.timedelta(seconds=5))
@@ -57,13 +58,14 @@ class TestPumpConnector:
 
         unit_under_test.wait()
 
-        assert self.mock_sleep.call_count == (5*60)/self.waiting_time_in_seconds
+        assert self.mock_sleep.call_count == (5 * 60) / self.waiting_time_in_seconds
 
     def test_wait_switch_is_off_switches_on_while_waiting(self, mocker):
         self.mock_dependencies(mocker)
 
         self.mock_connector.switched_on.side_effect = 20 * [False] + [True]
-        self.mock_get_datetime_now.side_effect = self._generate_datetimes(
+        self.mock_get_datetime_now.side_effect = [datetime.datetime(2022, 1, 1, 12, 00, 00,
+                                                                    0)] + self._generate_datetimes(
             start_datetime=datetime.datetime(2022, 1, 1, 12, 00, 00, 0),
             end_datetime=datetime.datetime(2022, 1, 1, 12, 10, 00, 0),
             stepsize=datetime.timedelta(seconds=5))
@@ -73,3 +75,20 @@ class TestPumpConnector:
         unit_under_test.wait()
 
         assert self.mock_sleep.call_count == 20
+
+    def test_wait_test_minimum_time(self, mocker):
+        self.mock_dependencies(mocker)
+
+        invalid_data = datetime.datetime(1970, 1, 1, 12, 00, 00, 0)
+
+        self.mock_connector.switched_on.return_value = True
+        self.mock_get_datetime_now.side_effect = [invalid_data] + self._generate_datetimes(
+            start_datetime=datetime.datetime(2022, 1, 1, 12, 00, 00, 0),
+            end_datetime=datetime.datetime(2022, 1, 1, 12, 10, 00, 0),
+            stepsize=datetime.timedelta(seconds=5))
+
+        unit_under_test = self.create_unit_under_test()
+
+        unit_under_test.wait()
+
+        assert self.mock_sleep.call_count == 30 / self.waiting_time_in_seconds
