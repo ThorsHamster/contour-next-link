@@ -139,7 +139,7 @@ class PumpConnector:
         if (waiting_time - datetime_now).seconds < minimum_waiting_time_in_seconds:
             waiting_time = datetime_now + datetime.timedelta(seconds=30)
 
-        while waiting_time > get_datetime_now():
+        while waiting_time >= get_datetime_now():
             time.sleep(5)
             if self._ha_connector.switched_on() is not switched_state:
                 break
