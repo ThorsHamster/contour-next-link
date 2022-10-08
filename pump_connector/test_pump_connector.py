@@ -4,11 +4,6 @@ import datetime
 from pump_connector import PumpConnector
 
 
-class MockConnector:
-    def switched_on(self):
-        return True
-
-
 class TestPumpConnector:
 
     waiting_time_in_seconds = 5
