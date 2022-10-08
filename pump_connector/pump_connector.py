@@ -136,7 +136,8 @@ class PumpConnector:
         else:
             waiting_time = datetime_now + datetime.timedelta(minutes=5)
 
-        if (waiting_time - datetime_now).seconds < minimum_waiting_time_in_seconds:
+        difference = waiting_time - datetime_now
+        if difference.total_seconds() < minimum_waiting_time_in_seconds:
             waiting_time = datetime_now + datetime.timedelta(seconds=30)
 
         while waiting_time >= get_datetime_now():
