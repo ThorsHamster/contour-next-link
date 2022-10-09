@@ -169,7 +169,6 @@ class PumpConnector:
             if type(event) == InsulinDeliveryStoppedEvent:
                 if event.suspendReasonText == "Set change suspend":
                     self._set_change_timestamp = event.timestamp
-                    break
 
     @staticmethod
     def _get_pump_event_id(event: NGPHistoryEvent):
