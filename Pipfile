@@ -19,10 +19,10 @@ six = "==1.10.0"
 transitions = "==0.6.0"
 urllib3 = "==1.24.2"
 homeassistant-api = "*"
-pytest = "*"
-pytest-mock = "*"
 
 [dev-packages]
+pytest = "*"
+pytest-mock = "*"
 
 [requires]
 python_version = "3.8"
