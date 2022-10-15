@@ -176,7 +176,7 @@ class PumpConnector:
 
     def _is_pump_event_new(self, event: NGPHistoryEvent) -> bool:
         time_delta = get_datetime_now() - event.timestamp.replace(tzinfo=None)
-        return time_delta.seconds < 15 * 60
+        return time_delta.total_seconds() < 15 * 60
 
     def _update_states(self, medtronic_pump_status: PumpStatusResponseMessage) -> None:
         if self._data_is_valid(medtronic_pump_status):
