@@ -96,24 +96,24 @@ class PumpConnector:
             status = self._mt.getPumpStatus()
             self._update_states(status)
 
+            events = self._request_pump_events()
+
+            self._get_set_change_timestamp(events)
+            if self._set_change_timestamp is not None:
+                self._ha_connector.update_latest_set_change(self._set_change_timestamp.strftime("%A"))
+
+            not_acknowledged_alarms = self._get_not_acknowledged_pump_alarms(events)
+
+            if not not_acknowledged_alarms:
+                self._ha_connector.update_event("")  # Reset message
+            else:
+                for not_acknowledged_alarm in not_acknowledged_alarms:
+                    logger.info(not_acknowledged_alarms[not_acknowledged_alarm])
+                    event = not_acknowledged_alarms[not_acknowledged_alarm]
+                    self._ha_connector.update_event(f"Alarm! {event.timestamp.strftime('%d.%m.%Y %H:%M:%S')}")
+                    time.sleep(1)  # time to process event on Homeassistant
+
             if self._data_is_valid(status):
-                events = self._request_pump_events()
-
-                self._get_set_change_timestamp(events)
-                if self._set_change_timestamp is not None:
-                    self._ha_connector.update_latest_set_change(self._set_change_timestamp.strftime("%A"))
-
-                not_acknowledged_alarms = self._get_not_acknowledged_pump_alarms(events)
-
-                if not not_acknowledged_alarms:
-                    self._ha_connector.update_event("")  # Reset message
-                else:
-                    for not_acknowledged_alarm in not_acknowledged_alarms:
-                        logger.info(not_acknowledged_alarms[not_acknowledged_alarm])
-                        event = not_acknowledged_alarms[not_acknowledged_alarm]
-                        self._ha_connector.update_event(f"Alarm! {event.timestamp.strftime('%d.%m.%Y %H:%M:%S')}")
-                        time.sleep(1)  # time to process event on Homeassistant
-
                 self._connection_timestamp = status.sensorBGLTimestamp
             else:
                 self._reset_timestamp_after_fail()
