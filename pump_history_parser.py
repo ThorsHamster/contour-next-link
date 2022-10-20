@@ -691,7 +691,7 @@ class DualBolusProgrammedEvent(BolusProgrammedEvent):
                    if isinstance(x, BolusWizardEstimateEvent)
                    and x.timestamp < self.timestamp
                    and self.timestamp - x.timestamp < timedelta(minutes=5)
-                   and x.finalEstimate == self.programmedAmount]
+                   and x.finalEstimate == self.programmedAmountImmediate]
         if len(matches) == 1:
             self.bolusWizardEvent = matches[0]
             self.bolusWizardEvent.programmed = True
