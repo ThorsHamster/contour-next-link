@@ -110,7 +110,8 @@ class PumpConnector:
                 for not_acknowledged_alarm in not_acknowledged_alarms:
                     logger.info(not_acknowledged_alarms[not_acknowledged_alarm])
                     event = not_acknowledged_alarms[not_acknowledged_alarm]
-                    self._ha_connector.update_event(f"Alarm! {event.timestamp.strftime('%d.%m.%Y %H:%M:%S')}")
+                    self._ha_connector.update_event(
+                        f"BGL: {status.sensorBGL}, {status.trendArrow} ({event.timestamp.strftime('%d.%m.%Y %H:%M:%S')})")
                     time.sleep(1)  # time to process event on Homeassistant
 
             if self._data_is_valid(status):
