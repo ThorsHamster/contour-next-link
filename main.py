@@ -11,6 +11,7 @@ logger = logging.getLogger('app')
 logHandler = handlers.RotatingFileHandler('log.txt', maxBytes=1000000, backupCount=2)
 formatter = logging.Formatter('%(asctime)s %(levelname)s %(message)s')
 logHandler.setFormatter(formatter)
+logHandler.setLevel(level=logging.WARNING)
 logger.addHandler(logHandler)
 
 from homeassistant_connector import HomeAssistantConnector
