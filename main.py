@@ -38,5 +38,6 @@ if __name__ == '__main__':
 
             pump_connector.wait()
         except BaseException as ex:
+            pump_connector.clear_messages()
             logger.error(ex)
             time.sleep(30)

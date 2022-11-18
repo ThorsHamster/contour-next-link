@@ -203,6 +203,19 @@ class PumpConnector:
         self._ha_connector.update_pump_battery_level(state="")
         self._ha_connector.update_insulin_units_remaining(state="")
         self._ha_connector.update_event(state="")
+        
+    def clear_messages(self) -> None:
+        try:
+            if self._mt is None:
+                self._mt = Medtronic600SeriesDriver()
+
+                self._mt.openDevice()
+            self._mt.clearMessage()
+        finally:
+            if self._mt.device is None:
+                return
+
+            self._mt.closeDevice()
 
     @staticmethod
     def _data_is_valid(medtronic_pump_status: PumpStatusResponseMessage) -> bool:
