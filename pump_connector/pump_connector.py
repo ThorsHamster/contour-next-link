@@ -96,6 +96,12 @@ class PumpConnector:
             status = self._mt.getPumpStatus()
             self._update_states(status)
 
+            if self._data_is_valid(status):
+                self._connected_successfully = True
+                self._connection_timestamp = status.sensorBGLTimestamp
+            else:
+                self._reset_timestamp_after_fail()
+
             events = self._request_pump_events()
 
             self._get_set_change_timestamp(events)
@@ -114,12 +120,6 @@ class PumpConnector:
                         f"BGL: {status.sensorBGL}, {status.trendArrow} ({event.timestamp.strftime('%d.%m.%Y %H:%M:%S')})")
                     time.sleep(1)  # time to process event on Homeassistant
 
-            if self._data_is_valid(status):
-                self._connection_timestamp = status.sensorBGLTimestamp
-            else:
-                self._reset_timestamp_after_fail()
-
-            self._connected_successfully = True
         except Exception:
             logger.error("Unexpected error while downloading data", exc_info=True)
             raise
