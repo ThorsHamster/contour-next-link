@@ -97,10 +97,10 @@ class PumpConnector:
             self._update_states(status)
 
             if self._data_is_valid(status):
-                self._connected_successfully = True
                 self._connection_timestamp = status.sensorBGLTimestamp
             else:
                 self._reset_timestamp_after_fail()
+            self._connected_successfully = True
 
             events = self._request_pump_events()
 
