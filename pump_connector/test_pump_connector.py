@@ -1,10 +1,26 @@
 from unittest.mock import Mock
+import pytest
 import datetime
 
 from pump_connector import PumpConnector
 from pump_data import MedtronicDataStatus, MedtronicMeasurementData
 from pump_history_parser import InsulinDeliveryStoppedEvent, InsulinDeliveryRestartedEvent, AlarmNotificationEvent, \
     AlarmClearedEvent
+
+
+@pytest.fixture
+def medtronic_data_valid():
+    return MedtronicMeasurementData(
+        bgl_value=120,
+        trend="No arrows",
+        active_insulin=1.1,
+        current_basal_rate=0.123,
+        temporary_basal_percentage=75,
+        battery_level=75,
+        insulin_units_remaining=92,
+        status=MedtronicDataStatus.valid,
+        timestamp=datetime.datetime(2022, 1, 1, 12, 00, 00, 0)
+    )
 
 
 class TestPumpConnector:
@@ -25,53 +41,32 @@ class TestPumpConnector:
         self.mock_AlarmClearedEvent = Mock(spec=AlarmClearedEvent)
         # pylint: enable=attribute-defined-outside-init
 
-    def test_get_and_upload_data_happy_path_no_events(self, mocker):
+    def test_get_and_upload_data_happy_path_no_events(self, mocker, medtronic_data_valid):
         self.mock_dependencies(mocker)
 
-        mock_return = MedtronicMeasurementData(
-            bgl_value=120,
-            trend="No arrows",
-            active_insulin=1.1,
-            current_basal_rate=0.123,
-            temporary_basal_percentage=75,
-            battery_level=75,
-            insulin_units_remaining=92,
-            status=MedtronicDataStatus.valid,
-            timestamp=datetime.datetime(2022, 1, 1, 12, 00, 00, 0)
-        )
-        self.mock_medtronic_driver.return_value.getPumpMeasurement.return_value = mock_return
+        self.mock_medtronic_driver.return_value.getPumpMeasurement.return_value = medtronic_data_valid
 
         unit_under_test = self.create_unit_under_test()
 
         unit_under_test.get_and_upload_data()
 
-        self.mock_connector.update_bgl.assert_called_with(state=mock_return.bgl_value)
-        self.mock_connector.update_trend.assert_called_with(state=mock_return.trend)
-        self.mock_connector.update_active_insulin.assert_called_with(state=mock_return.active_insulin)
-        self.mock_connector.update_current_basal_rate.assert_called_with(state=mock_return.current_basal_rate)
+        self.mock_connector.update_bgl.assert_called_with(state=medtronic_data_valid.bgl_value)
+        self.mock_connector.update_trend.assert_called_with(state=medtronic_data_valid.trend)
+        self.mock_connector.update_active_insulin.assert_called_with(state=medtronic_data_valid.active_insulin)
+        self.mock_connector.update_current_basal_rate.assert_called_with(state=medtronic_data_valid.current_basal_rate)
         self.mock_connector.update_temp_basal_rate_percentage.assert_called_with(
-            state=mock_return.temporary_basal_percentage)
-        self.mock_connector.update_pump_battery_level.assert_called_with(state=mock_return.battery_level)
-        self.mock_connector.update_insulin_units_remaining.assert_called_with(state=mock_return.insulin_units_remaining)
+            state=medtronic_data_valid.temporary_basal_percentage)
+        self.mock_connector.update_pump_battery_level.assert_called_with(state=medtronic_data_valid.battery_level)
+        self.mock_connector.update_insulin_units_remaining.assert_called_with(
+            state=medtronic_data_valid.insulin_units_remaining)
         self.mock_connector.update_status.assert_called_with("Connected.")
         self.mock_connector.update_timestamp.assert_called_with(state="12:00:00 01.01.2022")
         self.mock_connector.update_event.assert_called_with("")
 
-    def test_get_and_upload_data_event_set_change(self, mocker):
+    def test_get_and_upload_data_event_set_change(self, mocker, medtronic_data_valid):
         self.mock_dependencies(mocker)
 
-        mock_return = MedtronicMeasurementData(
-            bgl_value=120,
-            trend="No arrows",
-            active_insulin=1.1,
-            current_basal_rate=0.123,
-            temporary_basal_percentage=75,
-            battery_level=75,
-            insulin_units_remaining=92,
-            status=MedtronicDataStatus.valid,
-            timestamp=datetime.datetime(2022, 1, 1, 12, 00, 00, 0)
-        )
-        self.mock_medtronic_driver.return_value.getPumpMeasurement.return_value = mock_return
+        self.mock_medtronic_driver.return_value.getPumpMeasurement.return_value = medtronic_data_valid
 
         self.mock_InsulinDeliveryStoppedEvent.suspendReasonText = "Set change suspend"
         self.mock_InsulinDeliveryStoppedEvent.timestamp = datetime.datetime(2022, 1, 1, 12, 00, 00, 0)
@@ -87,21 +82,10 @@ class TestPumpConnector:
 
         self.mock_connector.update_latest_set_change.assert_called_with("Saturday")
 
-    def test_get_and_upload_data_event_low_glucose_prediction_only(self, mocker):
+    def test_get_and_upload_data_event_low_glucose_prediction_only(self, mocker, medtronic_data_valid):
         self.mock_dependencies(mocker)
 
-        mock_return = MedtronicMeasurementData(
-            bgl_value=60,
-            trend="No arrows",
-            active_insulin=1.1,
-            current_basal_rate=0.123,
-            temporary_basal_percentage=75,
-            battery_level=75,
-            insulin_units_remaining=92,
-            status=MedtronicDataStatus.valid,
-            timestamp=datetime.datetime(2022, 1, 1, 12, 00, 00, 0)
-        )
-        self.mock_medtronic_driver.return_value.getPumpMeasurement.return_value = mock_return
+        self.mock_medtronic_driver.return_value.getPumpMeasurement.return_value = medtronic_data_valid
         self.mock_get_datetime_now.return_value = datetime.datetime(2022, 1, 1, 12, 4, 00, 0)
 
         self.mock_InsulinDeliveryStoppedEvent_prediction = Mock(spec=InsulinDeliveryStoppedEvent)
@@ -122,21 +106,10 @@ class TestPumpConnector:
 
         self.mock_connector.update_event.assert_called_with("")
 
-    def test_get_and_upload_data_event_low_glucose_prediction_and_alarm(self, mocker):
+    def test_get_and_upload_data_event_low_glucose_prediction_and_alarm(self, mocker, medtronic_data_valid):
         self.mock_dependencies(mocker)
 
-        mock_return = MedtronicMeasurementData(
-            bgl_value=60,
-            trend="No arrows",
-            active_insulin=1.1,
-            current_basal_rate=0.123,
-            temporary_basal_percentage=75,
-            battery_level=75,
-            insulin_units_remaining=92,
-            status=MedtronicDataStatus.valid,
-            timestamp=datetime.datetime(2022, 1, 1, 12, 00, 00, 0)
-        )
-        self.mock_medtronic_driver.return_value.getPumpMeasurement.return_value = mock_return
+        self.mock_medtronic_driver.return_value.getPumpMeasurement.return_value = medtronic_data_valid
         self.mock_get_datetime_now.return_value = datetime.datetime(2022, 1, 1, 12, 4, 00, 0)
 
         self.mock_InsulinDeliveryStoppedEvent_prediction = Mock(spec=InsulinDeliveryStoppedEvent)
@@ -160,7 +133,8 @@ class TestPumpConnector:
 
         unit_under_test.get_and_upload_data()
 
-        self.mock_connector.update_event.assert_called_with(f"BGL: {mock_return.bgl_value}, {mock_return.trend} (01.01.2022 12:05:00)")
+        self.mock_connector.update_event.assert_called_with(
+            f"BGL: {medtronic_data_valid.bgl_value}, {medtronic_data_valid.trend} (01.01.2022 12:05:00)")
 
     def _generate_datetimes(self, start_datetime: datetime.datetime, end_datetime: datetime.datetime,
                             stepsize: datetime.timedelta) -> list:
