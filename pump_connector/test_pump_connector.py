@@ -158,6 +158,27 @@ class TestPumpConnector:
         self.mock_connector.update_timestamp.assert_called_with(state="12:04:00 01.01.2022")
         self.mock_connector.update_event.assert_called_with("")
 
+    def test_get_and_upload_data_no_connection(self, mocker):
+        self.mock_dependencies(mocker)
+
+        self.mock_medtronic_driver.return_value.openDevice = Mock(side_effect=RuntimeError("test"))
+        self.mock_medtronic_driver.return_value.device = None
+        self.mock_get_datetime_now.return_value = datetime.datetime(2022, 1, 1, 12, 14, 00, 0)
+
+        unit_under_test = self.create_unit_under_test()
+
+        unit_under_test.get_and_upload_data()
+
+        self.mock_connector.update_bgl.assert_called_with(state="")
+        self.mock_connector.update_trend.assert_called_with(state="")
+        self.mock_connector.update_active_insulin.assert_called_with(state="")
+        self.mock_connector.update_current_basal_rate.assert_called_with(state="")
+        self.mock_connector.update_temp_basal_rate_percentage.assert_called_with(state="")
+        self.mock_connector.update_pump_battery_level.assert_called_with(state="")
+        self.mock_connector.update_insulin_units_remaining.assert_called_with(state="")
+        self.mock_connector.update_status.assert_called_with("Not connected.")
+        self.mock_connector.update_timestamp.assert_called_with(state="12:14:00 01.01.2022")
+
     def test_get_and_upload_data_invalid_data(self, mocker):
         self.mock_dependencies(mocker)
 
