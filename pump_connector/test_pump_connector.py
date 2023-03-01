@@ -35,6 +35,7 @@ class TestPumpConnector:
         self.mock_sleep = mocker.patch("pump_connector.pump_connector.time.sleep")
         self.mock_get_datetime_now = mocker.patch("pump_connector.pump_connector.get_datetime_now")
         self.mock_medtronic_driver = mocker.patch("pump_connector.pump_connector.Medtronic600SeriesDriver")
+        self.mock_subprocess = mocker.patch("pump_connector.pump_connector.subprocess")
         self.mock_InsulinDeliveryStoppedEvent = Mock(spec=InsulinDeliveryStoppedEvent)
         self.mock_InsulinDeliveryRestartedEvent = Mock(spec=InsulinDeliveryRestartedEvent)
         self.mock_AlarmNotificationEvent = Mock(spec=AlarmNotificationEvent)
