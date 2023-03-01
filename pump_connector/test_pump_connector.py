@@ -122,6 +122,46 @@ class TestPumpConnector:
 
         self.mock_connector.update_event.assert_called_with("")
 
+    def test_get_and_upload_data_event_low_glucose_prediction_and_alarm(self, mocker):
+        self.mock_dependencies(mocker)
+
+        mock_return = MedtronicMeasurementData(
+            bgl_value=60,
+            trend="No arrows",
+            active_insulin=1.1,
+            current_basal_rate=0.123,
+            temporary_basal_percentage=75,
+            battery_level=75,
+            insulin_units_remaining=92,
+            status=MedtronicDataStatus.valid,
+            timestamp=datetime.datetime(2022, 1, 1, 12, 00, 00, 0)
+        )
+        self.mock_medtronic_driver.return_value.getPumpMeasurement.return_value = mock_return
+        self.mock_get_datetime_now.return_value = datetime.datetime(2022, 1, 1, 12, 4, 00, 0)
+
+        self.mock_InsulinDeliveryStoppedEvent_prediction = Mock(spec=InsulinDeliveryStoppedEvent)
+        self.mock_InsulinDeliveryStoppedEvent_prediction.suspendReasonText = "Predicted low glucose suspend"
+        self.mock_InsulinDeliveryStoppedEvent_prediction.timestamp = datetime.datetime(2022, 1, 1, 12, 00, 00, 0)
+
+        self.mock_AlarmNotificationEvent.timestamp = datetime.datetime(2022, 1, 1, 12, 00, 1, 0)
+        self.mock_AlarmNotificationEvent.eventData = b'032a04020224000f14006056042900600076'
+
+        self.mock_low_glucose_alarm = Mock(spec=AlarmNotificationEvent)
+        self.mock_low_glucose_alarm.timestamp = datetime.datetime(2022, 1, 1, 12, 5, 0, 0)
+        self.mock_low_glucose_alarm.eventData = b'032a04020224000f14006056042900600076'
+
+        self.mock_medtronic_driver.return_value.processPumpHistory.return_value = [
+            self.mock_AlarmNotificationEvent,
+            self.mock_InsulinDeliveryStoppedEvent_prediction,
+            self.mock_low_glucose_alarm
+        ]
+
+        unit_under_test = self.create_unit_under_test()
+
+        unit_under_test.get_and_upload_data()
+
+        self.mock_connector.update_event.assert_called_with(f"BGL: {mock_return.bgl_value}, {mock_return.trend} (01.01.2022 12:05:00)")
+
     def _generate_datetimes(self, start_datetime: datetime.datetime, end_datetime: datetime.datetime,
                             stepsize: datetime.timedelta) -> list:
         step = start_datetime
