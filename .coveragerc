@@ -1,0 +1,5 @@
+[run]
+omit =
+    venv/*
+    pump_history_parser.py
+    read_minimed_next24.py
