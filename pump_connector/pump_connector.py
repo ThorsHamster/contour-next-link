@@ -6,11 +6,11 @@ import subprocess
 
 logger = logging.getLogger('app')
 
-from read_minimed_next24 import Medtronic600SeriesDriver, HISTORY_DATA_TYPE, PumpStatusResponseMessage
+from read_minimed_next24 import Medtronic600SeriesDriver, HISTORY_DATA_TYPE
 from pump_history_parser import AlarmNotificationEvent, AlarmClearedEvent, NGPHistoryEvent, InsulinDeliveryStoppedEvent
 from homeassistant_connector import HomeAssistantConnector
 from pump_connector.helper import get_datetime_now
-from medtronic_measurement_data import MedtronicMeasurementData, MedtronicDataStatus
+from pump_data import MedtronicDataStatus, MedtronicMeasurementData
 
 
 class PumpConnector:

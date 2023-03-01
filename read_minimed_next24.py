@@ -19,7 +19,7 @@ import lzo  # pip install python-lzo
 from pump_history_parser import NGPHistoryEvent, BloodGlucoseReadingEvent
 from helpers import DateTimeHelper
 from datetime import time
-from pump_connector import MedtronicMeasurementData, MedtronicDataStatus
+from pump_data import MedtronicDataStatus, MedtronicMeasurementData
 
 ascii = {
     'ACK': 0x06,

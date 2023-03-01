@@ -1,4 +1,4 @@
 from .pump_connector import PumpConnector
-from .medtronic_measurement_data import MedtronicMeasurementData, MedtronicDataStatus
+from pump_data.medtronic_measurement_data import MedtronicMeasurementData, MedtronicDataStatus
 
 __all__ = ["PumpConnector", "MedtronicMeasurementData", "MedtronicDataStatus"]
