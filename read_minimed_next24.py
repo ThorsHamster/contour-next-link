@@ -18,8 +18,8 @@ import pickle  # needed for local history export
 import lzo  # pip install python-lzo
 from pump_history_parser import NGPHistoryEvent, BloodGlucoseReadingEvent
 from helpers import DateTimeHelper
-from datetime import time, timedelta
-
+from datetime import time
+from pump_connector import MedtronicMeasurementData, MedtronicDataStatus
 
 ascii = {
     'ACK': 0x06,
@@ -1630,6 +1630,30 @@ class Medtronic600SeriesDriver(object):
         self.readResponse0x81()
         response = self.getMedtronicMessage([COM_D_COMMAND.READ_PUMP_STATUS_RESPONSE])
         return response
+
+    def getPumpMeasurement(self):
+        status = self.getPumpStatus()
+
+        response = MedtronicMeasurementData()
+        if not self._data_is_valid(status):
+            response.status = MedtronicDataStatus.invalid
+        else:
+            response.bgl_value = status.sensorBGL
+            response.trend = status.trendArrow
+            response.active_insulin = status.activeInsulin
+            response.current_basal_rate = status.currentBasalRate
+            response.temporary_basal_percentage = status.tempBasalPercentage
+            response.battery_level = status.batteryLevelPercentage
+            response.insulin_units_remaining = status.insulinUnitsRemaining
+            response.status = MedtronicDataStatus.valid
+            response.timestamp = status.sensorBGLTimestamp
+
+        return response
+
+    @staticmethod
+    def _data_is_valid(medtronic_pump_status: PumpStatusResponseMessage) -> bool:
+        return str(medtronic_pump_status.sensorBGLTimestamp.strftime(
+            "%d.%m.%Y")) != "01.01.1970" and 0 < medtronic_pump_status.sensorBGL < 700
 
     def getBolusWizardCarbRatios(self):
         """Get bolus wizard carb ratios settings

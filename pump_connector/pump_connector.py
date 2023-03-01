@@ -10,6 +10,7 @@ from read_minimed_next24 import Medtronic600SeriesDriver, HISTORY_DATA_TYPE, Pum
 from pump_history_parser import AlarmNotificationEvent, AlarmClearedEvent, NGPHistoryEvent, InsulinDeliveryStoppedEvent
 from homeassistant_connector import HomeAssistantConnector
 from pump_connector.helper import get_datetime_now
+from medtronic_measurement_data import MedtronicMeasurementData, MedtronicDataStatus
 
 
 class PumpConnector:
@@ -93,7 +94,7 @@ class PumpConnector:
 
     def _get_and_upload_data(self) -> None:
         try:
-            status = self._mt.getPumpStatus()
+            status = self._mt.getPumpMeasurement()
             self._update_states(status)
 
             events = self._request_pump_events()
@@ -111,11 +112,11 @@ class PumpConnector:
                     logger.info(not_acknowledged_alarms[not_acknowledged_alarm])
                     event = not_acknowledged_alarms[not_acknowledged_alarm]
                     self._ha_connector.update_event(
-                        f"BGL: {status.sensorBGL}, {status.trendArrow} ({event.timestamp.strftime('%d.%m.%Y %H:%M:%S')})")
+                        f"BGL: {status.bgl_value}, {status.trend} ({event.timestamp.strftime('%d.%m.%Y %H:%M:%S')})")
                     time.sleep(1)  # time to process event on Homeassistant
 
             if self._data_is_valid(status):
-                self._connection_timestamp = status.sensorBGLTimestamp
+                self._connection_timestamp = status.timestamp
             else:
                 self._reset_timestamp_after_fail()
 
@@ -179,17 +180,17 @@ class PumpConnector:
         time_delta = get_datetime_now() - event.timestamp.replace(tzinfo=None)
         return time_delta.total_seconds() < 15 * 60
 
-    def _update_states(self, medtronic_pump_status: PumpStatusResponseMessage) -> None:
-        if self._data_is_valid(medtronic_pump_status):
+    def _update_states(self, medtronic_pump_data: MedtronicMeasurementData) -> None:
+        if self._data_is_valid(medtronic_pump_data):
             self._ha_connector.update_status("Connected.")
 
-            self._ha_connector.update_bgl(state=medtronic_pump_status.sensorBGL)
-            self._ha_connector.update_trend(state=medtronic_pump_status.trendArrow)
-            self._ha_connector.update_active_insulin(state=medtronic_pump_status.activeInsulin)
-            self._ha_connector.update_current_basal_rate(state=medtronic_pump_status.currentBasalRate)
-            self._ha_connector.update_temp_basal_rate_percentage(state=medtronic_pump_status.tempBasalPercentage)
-            self._ha_connector.update_pump_battery_level(state=medtronic_pump_status.batteryLevelPercentage)
-            self._ha_connector.update_insulin_units_remaining(state=medtronic_pump_status.insulinUnitsRemaining)
+            self._ha_connector.update_bgl(state=medtronic_pump_data.bgl_value)
+            self._ha_connector.update_trend(state=medtronic_pump_data.trend)
+            self._ha_connector.update_active_insulin(state=medtronic_pump_data.active_insulin)
+            self._ha_connector.update_current_basal_rate(state=medtronic_pump_data.current_basal_rate)
+            self._ha_connector.update_temp_basal_rate_percentage(state=medtronic_pump_data.temporary_basal_percentage)
+            self._ha_connector.update_pump_battery_level(state=medtronic_pump_data.battery_level)
+            self._ha_connector.update_insulin_units_remaining(state=medtronic_pump_data.insulin_units_remaining)
         else:
             self._ha_connector.update_status("Invalid data.")
             self.reset_all_states()
@@ -205,9 +206,8 @@ class PumpConnector:
         self._ha_connector.update_event(state="")
 
     @staticmethod
-    def _data_is_valid(medtronic_pump_status: PumpStatusResponseMessage) -> bool:
-        return str(medtronic_pump_status.sensorBGLTimestamp.strftime(
-            "%d.%m.%Y")) != "01.01.1970" and 0 < medtronic_pump_status.sensorBGL < 700
+    def _data_is_valid(medtronic_pump_data: MedtronicMeasurementData) -> bool:
+        return medtronic_pump_data == MedtronicDataStatus.valid
 
     def _reset_timestamp_after_fail(self):
         self._connection_timestamp = get_datetime_now()
