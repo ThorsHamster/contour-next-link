@@ -186,7 +186,7 @@ class TestPumpConnector:
         self.mock_connector.update_temp_basal_rate_percentage.assert_called_with(state="")
         self.mock_connector.update_pump_battery_level.assert_called_with(state="")
         self.mock_connector.update_insulin_units_remaining.assert_called_with(state="")
-        self.mock_connector.update_status.assert_called_with("Driver fail.")
+        self.mock_connector.update_status.assert_called_with("Invalid data.")
         self.mock_connector.update_timestamp.assert_called_with(state="12:04:00 01.01.2022")
         self.mock_connector.update_event.assert_called_with("")
 
