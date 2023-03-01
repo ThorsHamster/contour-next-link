@@ -136,6 +136,60 @@ class TestPumpConnector:
         self.mock_connector.update_event.assert_called_with(
             f"BGL: {medtronic_data_valid.bgl_value}, {medtronic_data_valid.trend} (01.01.2022 12:05:00)")
 
+    def test_get_and_upload_data_driver_fail(self, mocker):
+        self.mock_dependencies(mocker)
+
+        self.mock_medtronic_driver.openDevice = Mock(side_effect=RuntimeError("test"))
+        self.mock_medtronic_driver.return_value.device = None
+        self.mock_get_datetime_now.return_value = datetime.datetime(2022, 1, 1, 12, 4, 00, 0)
+
+        unit_under_test = self.create_unit_under_test()
+
+        unit_under_test.get_and_upload_data()
+
+        self.mock_connector.update_bgl.assert_called_with(state="")
+        self.mock_connector.update_trend.assert_called_with(state="")
+        self.mock_connector.update_active_insulin.assert_called_with(state="")
+        self.mock_connector.update_current_basal_rate.assert_called_with(state="")
+        self.mock_connector.update_temp_basal_rate_percentage.assert_called_with(state="")
+        self.mock_connector.update_pump_battery_level.assert_called_with(state="")
+        self.mock_connector.update_insulin_units_remaining.assert_called_with(state="")
+        self.mock_connector.update_status.assert_called_with("Driver fail.")
+        self.mock_connector.update_timestamp.assert_called_with(state="12:04:00 01.01.2022")
+        self.mock_connector.update_event.assert_called_with("")
+
+    def test_get_and_upload_data_invalid_data(self, mocker):
+        self.mock_dependencies(mocker)
+
+        self.mock_medtronic_driver.return_value.getPumpMeasurement.return_value = MedtronicMeasurementData(
+            bgl_value=111,
+            trend="Two arrows up",
+            active_insulin=1.3,
+            current_basal_rate=0.3,
+            temporary_basal_percentage=100,
+            battery_level=100,
+            insulin_units_remaining=100,
+            status=MedtronicDataStatus.invalid,
+            timestamp=datetime.datetime(2020, 1, 1, 13, 00, 00, 0)
+        )
+
+        self.mock_get_datetime_now.return_value = datetime.datetime(2022, 1, 1, 12, 4, 00, 0)
+
+        unit_under_test = self.create_unit_under_test()
+
+        unit_under_test.get_and_upload_data()
+
+        self.mock_connector.update_bgl.assert_called_with(state="")
+        self.mock_connector.update_trend.assert_called_with(state="")
+        self.mock_connector.update_active_insulin.assert_called_with(state="")
+        self.mock_connector.update_current_basal_rate.assert_called_with(state="")
+        self.mock_connector.update_temp_basal_rate_percentage.assert_called_with(state="")
+        self.mock_connector.update_pump_battery_level.assert_called_with(state="")
+        self.mock_connector.update_insulin_units_remaining.assert_called_with(state="")
+        self.mock_connector.update_status.assert_called_with("Driver fail.")
+        self.mock_connector.update_timestamp.assert_called_with(state="12:04:00 01.01.2022")
+        self.mock_connector.update_event.assert_called_with("")
+
     def _generate_datetimes(self, start_datetime: datetime.datetime, end_datetime: datetime.datetime,
                             stepsize: datetime.timedelta) -> list:
         step = start_datetime
