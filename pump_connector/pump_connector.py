@@ -241,7 +241,7 @@ class PumpConnector:
 
     @staticmethod
     def _data_is_valid(medtronic_pump_data: MedtronicMeasurementData) -> bool:
-        return medtronic_pump_data.status == MedtronicDataStatus.valid
+        return medtronic_pump_data.status is MedtronicDataStatus.valid
 
     def _reset_timestamp_after_fail(self):
         self._connection_timestamp = get_datetime_now()
