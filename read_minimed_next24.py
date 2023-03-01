@@ -14,9 +14,8 @@ import Crypto.Cipher.AES  # pip install PyCrypto
 import sqlite3
 import hashlib
 import re
-import pickle  # needed for local history export
 import lzo  # pip install python-lzo
-from pump_history_parser import NGPHistoryEvent, BloodGlucoseReadingEvent
+from pump_history_parser import NGPHistoryEvent
 from helpers import DateTimeHelper
 from datetime import time
 from pump_data import MedtronicDataStatus, MedtronicMeasurementData
