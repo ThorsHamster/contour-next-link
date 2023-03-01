@@ -160,9 +160,9 @@ class PumpConnector:
         for event in events:
             if self._is_pump_event_new(event):
                 if not self._events_to_ignore(event):
-                    if type(event) == AlarmNotificationEvent:
+                    if isinstance(event, AlarmNotificationEvent):
                         events_found[self._get_pump_event_id(event)] = event
-                    if type(event) == AlarmClearedEvent:
+                    if isinstance(event, AlarmClearedEvent):
                         if self._get_pump_event_id(event) in events_found:
                             del events_found[self._get_pump_event_id(event)]
 
@@ -170,16 +170,16 @@ class PumpConnector:
 
     def _get_set_change_timestamp(self, events: list) -> None:
         for event in events:
-            if type(event) == InsulinDeliveryStoppedEvent:
+            if isinstance(event, InsulinDeliveryStoppedEvent):
                 if event.suspendReasonText == "Set change suspend":
                     self._set_change_timestamp = event.timestamp
 
     @staticmethod
     def _events_to_ignore(event) -> bool:
-        if type(event) == InsulinDeliveryStoppedEvent:
+        if isinstance(event, InsulinDeliveryStoppedEvent):
             if event.suspendReasonText == "Predicted low glucose suspend":  # ignore suspended because of low glucose
                 return True
-        if type(event) == InsulinDeliveryRestartedEvent:
+        if isinstance(event, InsulinDeliveryRestartedEvent):
             if event.suspendReasonText == "Low glucose auto resume - preset glucose reached":  # ignore auto resume
                 return True
         return False
