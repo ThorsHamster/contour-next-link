@@ -7,7 +7,8 @@ import subprocess
 logger = logging.getLogger('app')
 
 from read_minimed_next24 import Medtronic600SeriesDriver, HISTORY_DATA_TYPE
-from pump_history_parser import AlarmNotificationEvent, AlarmClearedEvent, NGPHistoryEvent, InsulinDeliveryStoppedEvent
+from pump_history_parser import AlarmNotificationEvent, AlarmClearedEvent, NGPHistoryEvent, InsulinDeliveryStoppedEvent, \
+    InsulinDeliveryRestartedEvent
 from homeassistant_connector import HomeAssistantConnector
 from pump_connector.helper import get_datetime_now
 from pump_data import MedtronicDataStatus, MedtronicMeasurementData
@@ -158,11 +159,12 @@ class PumpConnector:
         events_found = {}
         for event in events:
             if self._is_pump_event_new(event):
-                if type(event) == AlarmNotificationEvent:
-                    events_found[self._get_pump_event_id(event)] = event
-                if type(event) == AlarmClearedEvent:
-                    if self._get_pump_event_id(event) in events_found:
-                        del events_found[self._get_pump_event_id(event)]
+                if not self._events_to_ignore(event):
+                    if type(event) == AlarmNotificationEvent:
+                        events_found[self._get_pump_event_id(event)] = event
+                    if type(event) == AlarmClearedEvent:
+                        if self._get_pump_event_id(event) in events_found:
+                            del events_found[self._get_pump_event_id(event)]
 
         return events_found
 
@@ -171,6 +173,16 @@ class PumpConnector:
             if type(event) == InsulinDeliveryStoppedEvent:
                 if event.suspendReasonText == "Set change suspend":
                     self._set_change_timestamp = event.timestamp
+
+    @staticmethod
+    def _events_to_ignore(event) -> bool:
+        if type(event) == InsulinDeliveryStoppedEvent:
+            if event.suspendReasonText == "Predicted low glucose suspend":  # ignore suspended because of low glucose
+                return True
+        if type(event) == InsulinDeliveryRestartedEvent:
+            if event.suspendReasonText == "Low glucose auto resume - preset glucose reached":  # ignore auto resume
+                return True
+        return False
 
     @staticmethod
     def _get_pump_event_id(event: NGPHistoryEvent):
