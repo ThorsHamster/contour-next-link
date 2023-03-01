@@ -3,7 +3,8 @@ import datetime
 
 from pump_connector import PumpConnector
 from pump_data import MedtronicDataStatus, MedtronicMeasurementData
-from pump_history_parser import InsulinDeliveryStoppedEvent, InsulinDeliveryRestartedEvent
+from pump_history_parser import InsulinDeliveryStoppedEvent, InsulinDeliveryRestartedEvent, AlarmNotificationEvent, \
+    AlarmClearedEvent
 
 
 class TestPumpConnector:
@@ -20,6 +21,8 @@ class TestPumpConnector:
         self.mock_medtronic_driver = mocker.patch("pump_connector.pump_connector.Medtronic600SeriesDriver")
         self.mock_InsulinDeliveryStoppedEvent = Mock(spec=InsulinDeliveryStoppedEvent)
         self.mock_InsulinDeliveryRestartedEvent = Mock(spec=InsulinDeliveryRestartedEvent)
+        self.mock_AlarmNotificationEvent = Mock(spec=AlarmNotificationEvent)
+        self.mock_AlarmClearedEvent = Mock(spec=AlarmClearedEvent)
         # pylint: enable=attribute-defined-outside-init
 
     def test_get_and_upload_data_happy_path_no_events(self, mocker):
@@ -83,6 +86,41 @@ class TestPumpConnector:
         unit_under_test.get_and_upload_data()
 
         self.mock_connector.update_latest_set_change.assert_called_with("Saturday")
+
+    def test_get_and_upload_data_event_low_glucose_prediction_only(self, mocker):
+        self.mock_dependencies(mocker)
+
+        mock_return = MedtronicMeasurementData(
+            bgl_value=60,
+            trend="No arrows",
+            active_insulin=1.1,
+            current_basal_rate=0.123,
+            temporary_basal_percentage=75,
+            battery_level=75,
+            insulin_units_remaining=92,
+            status=MedtronicDataStatus.valid,
+            timestamp=datetime.datetime(2022, 1, 1, 12, 00, 00, 0)
+        )
+        self.mock_medtronic_driver.return_value.getPumpMeasurement.return_value = mock_return
+        self.mock_get_datetime_now.return_value = datetime.datetime(2022, 1, 1, 12, 4, 00, 0)
+
+        self.mock_InsulinDeliveryStoppedEvent_prediction = Mock(spec=InsulinDeliveryStoppedEvent)
+        self.mock_InsulinDeliveryStoppedEvent_prediction.suspendReasonText = "Predicted low glucose suspend"
+        self.mock_InsulinDeliveryStoppedEvent_prediction.timestamp = datetime.datetime(2022, 1, 1, 12, 00, 00, 0)
+
+        self.mock_AlarmNotificationEvent.timestamp = datetime.datetime(2022, 1, 1, 12, 00, 1, 0)
+        self.mock_AlarmNotificationEvent.eventData = b'032a04020224000f14006056042900600076'
+
+        self.mock_medtronic_driver.return_value.processPumpHistory.return_value = [
+            self.mock_AlarmNotificationEvent,
+            self.mock_InsulinDeliveryStoppedEvent_prediction
+        ]
+
+        unit_under_test = self.create_unit_under_test()
+
+        unit_under_test.get_and_upload_data()
+
+        self.mock_connector.update_event.assert_called_with("")
 
     def _generate_datetimes(self, start_datetime: datetime.datetime, end_datetime: datetime.datetime,
                             stepsize: datetime.timedelta) -> list:

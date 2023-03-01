@@ -157,14 +157,28 @@ class PumpConnector:
 
     def _get_not_acknowledged_pump_alarms(self, events: list) -> dict:
         events_found = {}
+        timestamps_to_ignore = []  # necessary, because all InsulinDeliveryStoppedEvent and
+        # InsulinDeliveryRestartedEvent, also have a AlarmNotificationEvent, which should be ignored for now
         for event in events:
             if self._is_pump_event_new(event):
-                if not self._events_to_ignore(event):
+                if self._events_to_ignore(event):
+                    timestamps_to_ignore.append(event.timestamp)
+                else:
                     if isinstance(event, AlarmNotificationEvent):
                         events_found[self._get_pump_event_id(event)] = event
                     if isinstance(event, AlarmClearedEvent):
                         if self._get_pump_event_id(event) in events_found:
                             del events_found[self._get_pump_event_id(event)]
+
+        # remove all events in ignored timeframe. Unfortunately it is not possible to distinguish, which
+        # AlarmNotificationEvent corresponds to which InsulinDeliveryStoppedEvent except the time.
+        delete = []
+        for not_acknowledged_alarm in events_found:
+            event = events_found[not_acknowledged_alarm]
+            if self._is_in_list_of_ignored_timestamps(event.timestamp, timestamps_to_ignore):
+                delete.append(self._get_pump_event_id(event))
+        for i in delete:
+            del events_found[i]
 
         return events_found
 
@@ -181,6 +195,14 @@ class PumpConnector:
                 return True
         if isinstance(event, InsulinDeliveryRestartedEvent):
             if event.suspendReasonText == "Low glucose auto resume - preset glucose reached":  # ignore auto resume
+                return True
+        return False
+
+    @staticmethod
+    def _is_in_list_of_ignored_timestamps(timestamp: datetime.datetime, list_of_timestamps: list) -> bool:
+        for comparison_timestamp in list_of_timestamps:
+            if comparison_timestamp - datetime.timedelta(
+                    seconds=1) <= timestamp <= comparison_timestamp + datetime.timedelta(seconds=1):
                 return True
         return False
 
