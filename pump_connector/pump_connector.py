@@ -194,7 +194,7 @@ class PumpConnector:
             if event.suspendReasonText == "Predicted low glucose suspend":  # ignore suspended because of low glucose
                 return True
         if isinstance(event, InsulinDeliveryRestartedEvent):
-            if event.suspendReasonText == "Low glucose auto resume - preset glucose reached":  # ignore auto resume
+            if event.resumeReasonText == "Low glucose auto resume - preset glucose reached":  # ignore auto resume
                 return True
         return False
 
