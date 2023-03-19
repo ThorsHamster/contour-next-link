@@ -21,7 +21,6 @@ Connecting script between Medtronic Contour NextLink 2.4 and Homeassistant. See 
 ```
 $ python -m pip install --upgrade pipenv wheel
 $ pipenv install --deploy
-$ pipenv install pydantic
 ```
 * Add all necessary constants to the environment variables, e.g. in a bashrc file
 ```
