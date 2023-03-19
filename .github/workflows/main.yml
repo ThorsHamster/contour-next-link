@@ -46,3 +46,7 @@ jobs:
     - name: Run unittests
       run: |
         pipenv run pytest
+
+    - name: Coverage with pytest
+      run: |
+        pipenv run pytest --cov=. ./

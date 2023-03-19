@@ -6,10 +6,12 @@ import subprocess
 
 logger = logging.getLogger('app')
 
-from read_minimed_next24 import Medtronic600SeriesDriver, HISTORY_DATA_TYPE, PumpStatusResponseMessage
-from pump_history_parser import AlarmNotificationEvent, AlarmClearedEvent, NGPHistoryEvent, InsulinDeliveryStoppedEvent
+from read_minimed_next24 import Medtronic600SeriesDriver, HISTORY_DATA_TYPE
+from pump_history_parser import AlarmNotificationEvent, AlarmClearedEvent, NGPHistoryEvent, InsulinDeliveryStoppedEvent, \
+    InsulinDeliveryRestartedEvent
 from homeassistant_connector import HomeAssistantConnector
 from pump_connector.helper import get_datetime_now
+from pump_data import MedtronicDataStatus, MedtronicMeasurementData
 
 
 class PumpConnector:
@@ -93,7 +95,7 @@ class PumpConnector:
 
     def _get_and_upload_data(self) -> None:
         try:
-            status = self._mt.getPumpStatus()
+            status = self._mt.getPumpMeasurement()
             self._update_states(status)
 
             if self._data_is_valid(status):
@@ -117,9 +119,15 @@ class PumpConnector:
                     logger.info(not_acknowledged_alarms[not_acknowledged_alarm])
                     event = not_acknowledged_alarms[not_acknowledged_alarm]
                     self._ha_connector.update_event(
-                        f"BGL: {status.sensorBGL}, {status.trendArrow} ({event.timestamp.strftime('%d.%m.%Y %H:%M:%S')})")
+                        f"BGL: {status.bgl_value}, {status.trend} ({event.timestamp.strftime('%d.%m.%Y %H:%M:%S')})")
                     time.sleep(1)  # time to process event on Homeassistant
 
+            if self._data_is_valid(status):
+                self._connection_timestamp = status.timestamp
+            else:
+                self._reset_timestamp_after_fail()
+
+            self._connected_successfully = True
         except Exception:
             logger.error("Unexpected error while downloading data", exc_info=True)
             raise
@@ -155,21 +163,54 @@ class PumpConnector:
 
     def _get_not_acknowledged_pump_alarms(self, events: list) -> dict:
         events_found = {}
+        timestamps_to_ignore = []  # necessary, because all InsulinDeliveryStoppedEvent and
+        # InsulinDeliveryRestartedEvent, also have a AlarmNotificationEvent, which should be ignored for now
         for event in events:
             if self._is_pump_event_new(event):
-                if type(event) == AlarmNotificationEvent:
-                    events_found[self._get_pump_event_id(event)] = event
-                if type(event) == AlarmClearedEvent:
-                    if self._get_pump_event_id(event) in events_found:
-                        del events_found[self._get_pump_event_id(event)]
+                if self._events_to_ignore(event):
+                    timestamps_to_ignore.append(event.timestamp)
+                else:
+                    if isinstance(event, AlarmNotificationEvent):
+                        events_found[self._get_pump_event_id(event)] = event
+                    if isinstance(event, AlarmClearedEvent):
+                        if self._get_pump_event_id(event) in events_found:
+                            del events_found[self._get_pump_event_id(event)]
+
+        # remove all events in ignored timeframe. Unfortunately it is not possible to distinguish, which
+        # AlarmNotificationEvent corresponds to which InsulinDeliveryStoppedEvent except the time.
+        delete = []
+        for not_acknowledged_alarm in events_found:
+            event = events_found[not_acknowledged_alarm]
+            if self._is_in_list_of_ignored_timestamps(event.timestamp, timestamps_to_ignore):
+                delete.append(self._get_pump_event_id(event))
+        for i in delete:
+            del events_found[i]
 
         return events_found
 
     def _get_set_change_timestamp(self, events: list) -> None:
         for event in events:
-            if type(event) == InsulinDeliveryStoppedEvent:
+            if isinstance(event, InsulinDeliveryStoppedEvent):
                 if event.suspendReasonText == "Set change suspend":
                     self._set_change_timestamp = event.timestamp
+
+    @staticmethod
+    def _events_to_ignore(event) -> bool:
+        if isinstance(event, InsulinDeliveryStoppedEvent):
+            if event.suspendReasonText == "Predicted low glucose suspend":  # ignore suspended because of low glucose
+                return True
+        if isinstance(event, InsulinDeliveryRestartedEvent):
+            if event.resumeReasonText == "Low glucose auto resume - preset glucose reached":  # ignore auto resume
+                return True
+        return False
+
+    @staticmethod
+    def _is_in_list_of_ignored_timestamps(timestamp: datetime.datetime, list_of_timestamps: list) -> bool:
+        for comparison_timestamp in list_of_timestamps:
+            if comparison_timestamp - datetime.timedelta(
+                    seconds=1) <= timestamp <= comparison_timestamp + datetime.timedelta(seconds=1):
+                return True
+        return False
 
     @staticmethod
     def _get_pump_event_id(event: NGPHistoryEvent):
@@ -179,17 +220,17 @@ class PumpConnector:
         time_delta = get_datetime_now() - event.timestamp.replace(tzinfo=None)
         return time_delta.total_seconds() < 15 * 60
 
-    def _update_states(self, medtronic_pump_status: PumpStatusResponseMessage) -> None:
-        if self._data_is_valid(medtronic_pump_status):
+    def _update_states(self, medtronic_pump_data: MedtronicMeasurementData) -> None:
+        if self._data_is_valid(medtronic_pump_data):
             self._ha_connector.update_status("Connected.")
 
-            self._ha_connector.update_bgl(state=medtronic_pump_status.sensorBGL)
-            self._ha_connector.update_trend(state=medtronic_pump_status.trendArrow)
-            self._ha_connector.update_active_insulin(state=medtronic_pump_status.activeInsulin)
-            self._ha_connector.update_current_basal_rate(state=medtronic_pump_status.currentBasalRate)
-            self._ha_connector.update_temp_basal_rate_percentage(state=medtronic_pump_status.tempBasalPercentage)
-            self._ha_connector.update_pump_battery_level(state=medtronic_pump_status.batteryLevelPercentage)
-            self._ha_connector.update_insulin_units_remaining(state=medtronic_pump_status.insulinUnitsRemaining)
+            self._ha_connector.update_bgl(state=medtronic_pump_data.bgl_value)
+            self._ha_connector.update_trend(state=medtronic_pump_data.trend)
+            self._ha_connector.update_active_insulin(state=medtronic_pump_data.active_insulin)
+            self._ha_connector.update_current_basal_rate(state=medtronic_pump_data.current_basal_rate)
+            self._ha_connector.update_temp_basal_rate_percentage(state=medtronic_pump_data.temporary_basal_percentage)
+            self._ha_connector.update_pump_battery_level(state=medtronic_pump_data.battery_level)
+            self._ha_connector.update_insulin_units_remaining(state=medtronic_pump_data.insulin_units_remaining)
         else:
             self._ha_connector.update_status("Invalid data.")
             self.reset_all_states()
@@ -218,9 +259,8 @@ class PumpConnector:
             self._mt.closeDevice()
 
     @staticmethod
-    def _data_is_valid(medtronic_pump_status: PumpStatusResponseMessage) -> bool:
-        return str(medtronic_pump_status.sensorBGLTimestamp.strftime(
-            "%d.%m.%Y")) != "01.01.1970" and 0 < medtronic_pump_status.sensorBGL < 700
+    def _data_is_valid(medtronic_pump_data: MedtronicMeasurementData) -> bool:
+        return medtronic_pump_data.status is MedtronicDataStatus.valid
 
     def _reset_timestamp_after_fail(self):
         self._connection_timestamp = get_datetime_now()
