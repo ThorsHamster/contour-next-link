@@ -36,6 +36,7 @@ class TestPumpConnector:
         self.mock_get_datetime_now = mocker.patch("pump_connector.pump_connector.get_datetime_now")
         self.mock_medtronic_driver = mocker.patch("pump_connector.pump_connector.Medtronic600SeriesDriver")
         self.mock_subprocess = mocker.patch("pump_connector.pump_connector.subprocess")
+        self.mock_logger = mocker.patch("pump_connector.pump_connector.logger")
         self.mock_InsulinDeliveryStoppedEvent = Mock(spec=InsulinDeliveryStoppedEvent)
         self.mock_InsulinDeliveryRestartedEvent = Mock(spec=InsulinDeliveryRestartedEvent)
         self.mock_AlarmNotificationEvent = Mock(spec=AlarmNotificationEvent)
@@ -63,6 +64,7 @@ class TestPumpConnector:
         self.mock_connector.update_status.assert_called_with("Connected.")
         self.mock_connector.update_timestamp.assert_called_with(state="12:00:00 01.01.2022")
         self.mock_connector.update_event.assert_called_with("")
+        assert self.mock_logger.error.call_count == 0
 
     def test_get_and_upload_data_event_set_change(self, mocker, medtronic_data_valid):
         self.mock_dependencies(mocker)
@@ -71,6 +73,8 @@ class TestPumpConnector:
 
         self.mock_InsulinDeliveryStoppedEvent.suspendReasonText = "Set change suspend"
         self.mock_InsulinDeliveryStoppedEvent.timestamp = datetime.datetime(2022, 1, 1, 12, 00, 00, 0)
+        self.mock_InsulinDeliveryRestartedEvent.timestamp = datetime.datetime(2022, 1, 1, 12, 00, 00, 0)
+        self.mock_get_datetime_now.return_value = datetime.datetime(2022, 1, 1, 12, 4, 00, 0)
         self.mock_medtronic_driver.return_value.processPumpHistory.return_value = [
             self.mock_InsulinDeliveryRestartedEvent,
             self.mock_InsulinDeliveryStoppedEvent,
@@ -82,6 +86,7 @@ class TestPumpConnector:
         unit_under_test.get_and_upload_data()
 
         self.mock_connector.update_latest_set_change.assert_called_with("Saturday")
+        assert self.mock_logger.error.call_count == 0
 
     def test_get_and_upload_data_event_low_glucose_prediction_only(self, mocker, medtronic_data_valid):
         self.mock_dependencies(mocker)
@@ -106,6 +111,7 @@ class TestPumpConnector:
         unit_under_test.get_and_upload_data()
 
         self.mock_connector.update_event.assert_called_with("")
+        assert self.mock_logger.error.call_count == 0
 
     def test_get_and_upload_data_event_low_glucose_prediction_and_alarm(self, mocker, medtronic_data_valid):
         self.mock_dependencies(mocker)
@@ -136,6 +142,7 @@ class TestPumpConnector:
 
         self.mock_connector.update_event.assert_called_with(
             f"BGL: {medtronic_data_valid.bgl_value}, {medtronic_data_valid.trend} (01.01.2022 12:05:00)")
+        assert self.mock_logger.error.call_count == 0
 
     def test_get_and_upload_data_driver_fail(self, mocker):
         self.mock_dependencies(mocker)
@@ -158,6 +165,7 @@ class TestPumpConnector:
         self.mock_connector.update_status.assert_called_with("Driver fail.")
         self.mock_connector.update_timestamp.assert_called_with(state="12:04:00 01.01.2022")
         self.mock_connector.update_event.assert_called_with("")
+        assert self.mock_logger.error.call_count == 0
 
     def test_get_and_upload_data_no_connection(self, mocker):
         self.mock_dependencies(mocker)
@@ -179,6 +187,7 @@ class TestPumpConnector:
         self.mock_connector.update_insulin_units_remaining.assert_called_with(state="")
         self.mock_connector.update_status.assert_called_with("Not connected.")
         self.mock_connector.update_timestamp.assert_called_with(state="12:14:00 01.01.2022")
+        assert self.mock_logger.error.call_count == 0
 
     def test_get_and_upload_data_invalid_data(self, mocker):
         self.mock_dependencies(mocker)
@@ -211,6 +220,7 @@ class TestPumpConnector:
         self.mock_connector.update_status.assert_called_with("Invalid data.")
         self.mock_connector.update_timestamp.assert_called_with(state="12:04:00 01.01.2022")
         self.mock_connector.update_event.assert_called_with("")
+        assert self.mock_logger.error.call_count == 0
 
     def _generate_datetimes(self, start_datetime: datetime.datetime, end_datetime: datetime.datetime,
                             stepsize: datetime.timedelta) -> list:
