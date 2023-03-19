@@ -1,3 +1,5 @@
+[![Tests](https://github.com/ThorsHamster/contour-next-link/actions/workflows/main.yml/badge.svg)](https://github.com/ThorsHamster/contour-next-link/actions/workflows/main.yml)
+
 # contour-next-link
 
 Connecting script between Medtronic Contour NextLink 2.4 and Homeassistant. See also [smarthome](https://github.com/ThorsHamster/smarthome).
