@@ -6,6 +6,7 @@ from pump_connector import PumpConnector
 from pump_data import MedtronicDataStatus, MedtronicMeasurementData
 from pump_history_parser import InsulinDeliveryStoppedEvent, InsulinDeliveryRestartedEvent, AlarmNotificationEvent, \
     AlarmClearedEvent
+from read_minimed_next24 import PumpTimeResponseMessage
 
 
 @pytest.fixture
@@ -41,6 +42,7 @@ class TestPumpConnector:
         self.mock_InsulinDeliveryRestartedEvent = Mock(spec=InsulinDeliveryRestartedEvent)
         self.mock_AlarmNotificationEvent = Mock(spec=AlarmNotificationEvent)
         self.mock_AlarmClearedEvent = Mock(spec=AlarmClearedEvent)
+        self.mock_PumpTimeResponseMessage = Mock(spec=PumpTimeResponseMessage)
         # pylint: enable=attribute-defined-outside-init
 
     def test_get_and_upload_data_happy_path_no_events(self, mocker, medtronic_data_valid):
@@ -297,3 +299,95 @@ class TestPumpConnector:
         unit_under_test.wait()
 
         assert self.mock_sleep.call_count == 30 / self.waiting_time_in_seconds
+
+    def test_get_and_upload_data_and_wait_happy_path_no_events_pump_30s_behind(self, mocker, medtronic_data_valid):
+        self.mock_dependencies(mocker)
+
+        self.mock_connector.switched_on.return_value = True
+        self.mock_get_datetime_now.side_effect = [datetime.datetime(2022, 1, 1, 12, 00, 00,
+                                                                    0)] * 3 + self._generate_datetimes(
+            start_datetime=datetime.datetime(2022, 1, 1, 12, 00, 00, 0),
+            end_datetime=datetime.datetime(2022, 1, 1, 12, 10, 00, 0),
+            stepsize=datetime.timedelta(seconds=5))
+
+        self.mock_medtronic_driver.return_value.getPumpMeasurement.return_value = medtronic_data_valid
+        self.mock_PumpTimeResponseMessage.datetime = datetime.datetime(2022, 1, 1, 11, 59, 30, 0)
+        self.mock_medtronic_driver.return_value.getPumpTime.return_value = self.mock_PumpTimeResponseMessage
+
+        unit_under_test = self.create_unit_under_test()
+
+        unit_under_test.get_and_upload_data()
+        unit_under_test.wait()
+
+        assert self.mock_logger.error.call_count == 0
+
+        assert self.mock_sleep.call_count == (5 * 60 + 30 + 30) / self.waiting_time_in_seconds
+
+    def test_get_and_upload_data_and_wait_happy_path_no_events_pump_30s_before(self, mocker, medtronic_data_valid):
+        self.mock_dependencies(mocker)
+
+        self.mock_connector.switched_on.return_value = True
+        self.mock_get_datetime_now.side_effect = [datetime.datetime(2022, 1, 1, 12, 00, 00,
+                                                                    0)] * 3 + self._generate_datetimes(
+            start_datetime=datetime.datetime(2022, 1, 1, 12, 00, 00, 0),
+            end_datetime=datetime.datetime(2022, 1, 1, 12, 10, 00, 0),
+            stepsize=datetime.timedelta(seconds=5))
+
+        self.mock_medtronic_driver.return_value.getPumpMeasurement.return_value = medtronic_data_valid
+        self.mock_PumpTimeResponseMessage.datetime = datetime.datetime(2022, 1, 1, 12, 00, 30, 0)
+        self.mock_medtronic_driver.return_value.getPumpTime.return_value = self.mock_PumpTimeResponseMessage
+
+        unit_under_test = self.create_unit_under_test()
+
+        unit_under_test.get_and_upload_data()
+        unit_under_test.wait()
+
+        assert self.mock_logger.error.call_count == 0
+
+        assert self.mock_sleep.call_count == (5 * 60 + 30 - 30) / self.waiting_time_in_seconds
+
+    def test_get_and_upload_data_and_wait_happy_path_no_events_pump_1h_before(self, mocker, medtronic_data_valid):
+        self.mock_dependencies(mocker)
+
+        self.mock_connector.switched_on.return_value = True
+        self.mock_get_datetime_now.side_effect = [datetime.datetime(2022, 1, 1, 12, 00, 00,
+                                                                    0)] * 3 + self._generate_datetimes(
+            start_datetime=datetime.datetime(2022, 1, 1, 12, 00, 00, 0),
+            end_datetime=datetime.datetime(2022, 1, 1, 12, 10, 00, 0),
+            stepsize=datetime.timedelta(seconds=5))
+
+        self.mock_medtronic_driver.return_value.getPumpMeasurement.return_value = medtronic_data_valid
+        self.mock_PumpTimeResponseMessage.datetime = datetime.datetime(2022, 1, 1, 13, 00, 00, 0)
+        self.mock_medtronic_driver.return_value.getPumpTime.return_value = self.mock_PumpTimeResponseMessage
+
+        unit_under_test = self.create_unit_under_test()
+
+        unit_under_test.get_and_upload_data()
+        unit_under_test.wait()
+
+        assert self.mock_logger.error.call_count == 0
+
+        assert self.mock_sleep.call_count == (5 * 60 + 30) / self.waiting_time_in_seconds
+
+    def test_get_and_upload_data_and_wait_happy_path_no_events_pump_1h_behind(self, mocker, medtronic_data_valid):
+        self.mock_dependencies(mocker)
+
+        self.mock_connector.switched_on.return_value = True
+        self.mock_get_datetime_now.side_effect = [datetime.datetime(2022, 1, 1, 12, 00, 00,
+                                                                    0)] * 3 + self._generate_datetimes(
+            start_datetime=datetime.datetime(2022, 1, 1, 12, 00, 00, 0),
+            end_datetime=datetime.datetime(2022, 1, 1, 12, 10, 00, 0),
+            stepsize=datetime.timedelta(seconds=5))
+
+        self.mock_medtronic_driver.return_value.getPumpMeasurement.return_value = medtronic_data_valid
+        self.mock_PumpTimeResponseMessage.datetime = datetime.datetime(2022, 1, 1, 11, 00, 00, 0)
+        self.mock_medtronic_driver.return_value.getPumpTime.return_value = self.mock_PumpTimeResponseMessage
+
+        unit_under_test = self.create_unit_under_test()
+
+        unit_under_test.get_and_upload_data()
+        unit_under_test.wait()
+
+        assert self.mock_logger.error.call_count == 0
+
+        assert self.mock_sleep.call_count == (5 * 60 + 30) / self.waiting_time_in_seconds
