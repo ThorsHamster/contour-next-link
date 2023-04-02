@@ -1612,7 +1612,7 @@ class Medtronic600SeriesDriver(object):
         self.sendMessage(bayerMessage.encode())
         self.readResponse0x81()
         result = self.getMedtronicMessage([COM_D_COMMAND.TIME_RESPONSE])
-        self.offset = result.offset;
+        self.offset = result.offset
         return result
 
     def getPumpStatus(self):
