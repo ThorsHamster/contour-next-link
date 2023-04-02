@@ -22,6 +22,7 @@ class PumpConnector:
         self._connection_timestamp = get_datetime_now()
         self._mt = None
         self._set_change_timestamp = None
+        self._time_difference_in_seconds = 0
 
     def get_and_upload_data(self) -> None:
         self._connected_successfully = False
@@ -88,10 +89,18 @@ class PumpConnector:
         try:
             self._mt.beginEHSM()
             # We need to read always the pump time to store the offset for later messaging
-            self._mt.getPumpTime()
+            pump_time = self._mt.getPumpTime()
+            self._time_difference_in_seconds = self._get_time_diff_in_seconds(pump_time.datetime)
             self._get_and_upload_data()
         finally:
             self._mt.finishEHSM()
+
+    def _get_time_diff_in_seconds(self, pump_datetime: datetime.datetime) -> int:
+        try:
+            time_diff = get_datetime_now().replace(tzinfo=None) - pump_datetime.replace(tzinfo=None)
+            return int(time_diff.total_seconds())
+        except Exception:
+            return 0
 
     def _get_and_upload_data(self) -> None:
         try:
@@ -142,6 +151,7 @@ class PumpConnector:
         if switched_state:
             waiting_time = self._connection_timestamp.replace(tzinfo=None) + \
                            datetime.timedelta(minutes=5, seconds=30)
+            waiting_time = waiting_time + datetime.timedelta(seconds=self._time_difference_in_seconds)
         else:
             waiting_time = datetime_now + datetime.timedelta(minutes=5)
 
